@@ -1,0 +1,50 @@
+name: EZRanksLite
+main: me.clip.ezrankslite.EZRanksLite
+version: 1.3.1
+author: extended_clip
+depend: [Vault]
+description: Flexible lightweight economy based ranking system for your server permissions groups
+commands:
+   rankup:
+     description: rankup command
+     aliases: [ezru, ru, ezr]
+   ranks:
+     description: rank list command
+     aliases: [showranks, listranks]
+   ezadmin:
+     description: admin ezrankslite command
+     aliases: [eza, rankupadmin]
+   sbtoggle:
+     description: enable/disable scoreboard view if it is enabled in the config file
+     aliases: [scoreboardtoggle, eztoggle]
+   sbrefresh:
+     description: force refresh the scoreboard if it is enabled
+     aliases: [scoreboardrefresh, ezrefresh, sbupdate]
+permissions:
+    ezranks.admin:
+        description: Allows access to /rankup admin
+        default: op
+    ezranks.admin.create:
+        description: Ability to create a default rankup for the rank specified in the rankups.yml
+        default: op
+    ezranks.admin.reload:
+        description: Ability to reload rankups.yml and config file 
+        default: op
+    ezranks.admin.delete:
+        description: Ability to delete an active rankup from the active rankups and also the rankups.yml
+        default: op
+    ezranks.admin.setactive:
+        description: Ability to enable or disable rankups by command
+        default: op
+    ezranks.admin.setcost:
+        description: Ability to change a rankup cost by command
+        default: op
+    ezranks.admin.addcommand:
+        description: Ability to add a command to be executed for a specific rankup when players successfully rankup
+        default: op
+    ezranks.admin.delcommand:
+        description: Ability to remove a command from being executed for a specific rankup when players successfully rankup
+        default: op
+    ezranks.admin.scoreboard:
+        description: Ability to toggle and update others scoreboard by command
+        default: op
