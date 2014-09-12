@@ -62,9 +62,11 @@ public class RankupCommand implements CommandExecutor {
 		OfflinePlayer pll = p;
 		
 		if (plugin.useRankupCooldown()) {
+			if (!p.hasPermission("ezadmin.cooldown.bypass")) {
 			if (cooldown.contains(p.getName())) {
 				plugin.sms(p, Lang.RANKUP_ON_COOLDOWN.getConfigValue(new String[] {plugin.getRankupCooldownTime()+""}));
 				return true;
+			}
 			}
 		}
 		
@@ -145,7 +147,7 @@ public class RankupCommand implements CommandExecutor {
 				if (plugin.getPlayerhandler().rankupPlayer(p,
 						ezrank, ru)) {
 					if (plugin.useRankupCooldown()) {
-						
+						if (!p.hasPermission("ezadmin.cooldown.bypass")) {
 						cooldown.add(p.getName());
 						final String plname = p.getName();
 						final int time = plugin.getRankupCooldownTime();
@@ -158,7 +160,7 @@ public class RankupCommand implements CommandExecutor {
 									}
 								}, (20 * time));
 						
-						
+						}
 						}
 					plugin.debug(false, p.getName() + " ranked up from "
 							+ ezrank.getRank() + " to " + ru.getRank());
@@ -246,7 +248,7 @@ public class RankupCommand implements CommandExecutor {
 				if (plugin.getPlayerhandler().resetPlayer(p,
 						ezrank)) {
 					if (plugin.useRankupCooldown()) {
-						
+						if (!p.hasPermission("ezadmin.cooldown.bypass")) {
 						cooldown.add(p.getName());
 						plugin.debug(false,
 								p.getName() + " added to rankup cooldown");
@@ -263,7 +265,7 @@ public class RankupCommand implements CommandExecutor {
 									}
 								}, (20 * time));
 						
-						
+						}
 						}
 					plugin.debug(false, p.getName() + " reset their rank from "
 							+ ezrank.getRank());
@@ -356,6 +358,8 @@ public class RankupCommand implements CommandExecutor {
 								+ " to " + rankup.getRank());
 				if (plugin.useRankupCooldown()) {
 					
+					if (!p.hasPermission("ezadmin.cooldown.bypass")) {
+					
 					cooldown.add(p.getName());
 					plugin.debug(false,
 							p.getName() + " added to rankup cooldown");
@@ -374,6 +378,7 @@ public class RankupCommand implements CommandExecutor {
 					
 					
 					}
+				}
 				
 			} else {
 				plugin.debug(false,

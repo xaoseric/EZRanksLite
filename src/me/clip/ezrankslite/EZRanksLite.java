@@ -40,8 +40,6 @@ import me.clip.ezrankslite.rankdata.RankupFile;
 import me.clip.ezrankslite.scoreboard.RefreshScoreboardTask;
 import me.clip.ezrankslite.scoreboard.ScoreboardHandler;
 import me.clip.ezrankslite.scoreboard.ScoreboardOptions;
-import me.clip.ezrankslite.updater.Updater;
-import me.clip.ezrankslite.updater.Updater.ReleaseType;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -71,7 +69,6 @@ public class EZRanksLite extends JavaPlugin {
 	private ConfigWrapper messagesFile = new ConfigWrapper(this, "", "messages.yml");
 	
 	private static boolean debug;
-	private static boolean checkUpdates;
 	private static String servername;
 	private static boolean fixThousands;
 	private static boolean fixMillions;
@@ -91,17 +88,18 @@ public class EZRanksLite extends JavaPlugin {
 	private static boolean useScoreboard;
 	private static int sbRefresh;
 	private static ScoreboardOptions sbOptions = null;
-
-	public static boolean update = false;
-	public static String uName = "";
-	public static ReleaseType uType = null;
-	public static String uVersion = "";
-	public static String uLink = "";
 	
 	private static BukkitTask sbTask = null;
+	
+	public static boolean useVoteParty = false;
 
 	@Override
 	public void onEnable() {
+		if (Bukkit.getServer().getPluginManager().getPlugin("VoteParty") != null 
+				&& Bukkit.getServer().getPluginManager().getPlugin("VoteParty").isEnabled()) {
+			useVoteParty = true;
+		}
+			
 		if (!vaultperms.setupVault()) {
 			debug(true,
 					"Could not detect Vault for permissions Hooking! Disabling EZRanksLite!");
@@ -111,6 +109,7 @@ public class EZRanksLite extends JavaPlugin {
 					"Could not hook into an Economy plugin through Vault! Disabling EZRanksLite!");
 			Bukkit.getServer().getPluginManager().disablePlugin(this);
 		}
+		
 		init();
 		rankupfile.reload();
 		rankupfile.save();
@@ -123,7 +122,6 @@ public class EZRanksLite extends JavaPlugin {
 		if (!startMetricsLite()) {
 			debug(false, "Could not start MetricsLite!");
 		}
-		checkupdates();
 		if (useScoreboard) {
 			debug(false,
 					"Scoreboard features are enabled!");
@@ -160,7 +158,6 @@ public class EZRanksLite extends JavaPlugin {
 	private void init() {
 		config.loadDefaultConfiguration();
 		debug = config.isDebug();
-		checkUpdates = config.checkUpdates();
 		servername = config.getServerName();
 		useScoreboard = config.useScoreboard();
 		fixThousands = config.fixThousands();
@@ -183,7 +180,6 @@ public class EZRanksLite extends JavaPlugin {
 	
 	public void loadOptions() {
 		debug = config.isDebug();
-		checkUpdates = config.checkUpdates();
 		servername = config.getServerName();
 		useScoreboard = config.useScoreboard();
 		fixThousands = config.fixThousands();
@@ -205,17 +201,8 @@ public class EZRanksLite extends JavaPlugin {
 	
 	public ScoreboardOptions loadSBOptions() {
 		ScoreboardOptions options = new ScoreboardOptions();
-		options.setCurrentRankSection(config.sbCurrentRankSection());
-		options.setCurrentRank(config.sbCurrentRank());
-		options.setRankupSectionSingular(config.sbRankupSectionSingular());
-		options.setRankupSectionPlural(config.sbRankupSectionPlural());
-		options.setRankup(config.sbRankup());
-		options.setCostSection(config.sbRankupCostSection());
-		options.setCost(config.sbRankupCost());
-		options.setBalanceSection(config.sbBalanceSection());
-		options.setBalance(config.sbBalance());
-		options.setCustomHeader(config.sbCustomHeader());
-		options.setCustomFooter(config.sbCustomFooter());
+		options.setTitle(config.sbTitle());
+		options.setText(config.sbDisplay());
 		sbOptions = options;
 		debug(false,
 				"Scoreboard options loaded!");
@@ -226,32 +213,6 @@ public class EZRanksLite extends JavaPlugin {
 	private void registerListeners() {
 		Bukkit.getServer().getPluginManager()
 				.registerEvents(new JoinListener(this), this);
-	}
-
-	public void checkupdates() {
-		if (checkUpdates) {
-
-			Updater updater = new Updater(this, 82740, this.getFile(),
-					Updater.UpdateType.NO_DOWNLOAD, false);
-
-			update = updater.getResult() == Updater.UpdateResult.UPDATE_AVAILABLE;
-			uName = updater.getLatestName();
-			uVersion = updater.getLatestGameVersion();
-			uType = updater.getLatestType();
-			uLink = updater.getLatestFileLink();
-
-			if (update == true) {
-				getLogger()
-						.info("An update is available: " + uName + ", a "
-								+ uType + " for " + uVersion + " available at "
-								+ uLink);
-			} else {
-				getLogger().info(
-						"You are running " + this.getDescription().getVersion()
-								+ ", the latest version of EZRanksLite!");
-			}
-
-		}
 	}
 
 	public VaultPerms getVault() {

@@ -23,6 +23,7 @@ import java.util.HashMap;
 
 import me.clip.ezrankslite.EZRanksLite;
 import me.clip.ezrankslite.rankdata.EZRankup;
+import me.clip.voteparty.VotePartyAPI;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -71,164 +72,70 @@ public class ScoreboardHandler {
 	}
 
 	public EZScoreboard createScoreboard(Player p) {
-		
+
+		int online = Bukkit.getServer().getOnlinePlayers().length;
+
 		OfflinePlayer pl = p;
-		
+
+		String name = p.getName();
+
 		String rank = plugin.getVault().getMainGroup(p);
+
+		String bal = EZRanksLite.fixMoney(plugin.getEco().getBalance(pl),
+				String.valueOf(plugin.getEco().getBalance(pl)));
+
+		String nextRank = "&cnone available";
+
+		String cost = "0";
+
+		String votes = "";
+
+		if (EZRanksLite.useVoteParty) {
+			votes = VotePartyAPI.getCurrentVoteCounter() + "";
+		}
+
+		if (plugin.getRankHandler().hasRankData(rank)
+				&& plugin.getRankHandler().getRankData(rank).hasRankups()) {
+			for (EZRankup r : plugin.getRankHandler().getRankData(rank)
+					.getRankups()) {
+				nextRank = r.getRank();
+				cost = EZRanksLite.fixMoney(Double.parseDouble(r.getCost()),
+						r.getCost());
+			}
+		}
+
 		ScoreboardOptions options = plugin.getSbOptions();
+
 		if (options == null) {
 			options = plugin.loadSBOptions();
 		}
-		EZScoreboard scoreboard = new EZScoreboard(
-				ChatColor.translateAlternateColorCodes('&',
-						plugin.getServername()));
-		if (options.getCustomHeader() == null
-				|| options.getCustomHeader().isEmpty()) {
-		} else {
-			for (String s : options.getCustomHeader()) {
-				if (s.equalsIgnoreCase("blank")) {
-					scoreboard.blank();
-				} else if (s.equalsIgnoreCase("none")
-						|| s.equalsIgnoreCase("off")) {
-					continue;
-				} else {
-					scoreboard.setLine(ChatColor
-							.translateAlternateColorCodes(
-									'&',
-									s.replace( "%online%", Bukkit.getServer().getOnlinePlayers().length + "")
-										.replace("%player%", p.getName())
-										.replace("%balance%", plugin.getEco().getBalance(pl) + "")));
-				}
 
-			}
-		}
-		if (options.getCurrentRankSection().isEmpty()
-				|| options.getCurrentRankSection().equalsIgnoreCase("none")
-				|| options.getCurrentRankSection().equalsIgnoreCase("off")) {
-		} else {
-			if (options.getCurrentRankSection().equalsIgnoreCase("line")
-					|| options.getCurrentRankSection().equalsIgnoreCase("blank")) {
-				scoreboard.blank();
-			}
-			else {
-			scoreboard.setLine(ChatColor.translateAlternateColorCodes('&',
-					options.getCurrentRankSection()));
-			}
-		}
-		if (options.getCurrentRank().isEmpty()
-				|| options.getCurrentRank().equalsIgnoreCase("none")
-				|| options.getCurrentRank().equalsIgnoreCase("off")) {
-		} else {
-			String current = options.getCurrentRank().replace("%rankfrom%",
-					rank);
-			scoreboard.setLine(ChatColor.translateAlternateColorCodes('&',
-					current));
-		}
-		scoreboard.blank();
+		EZScoreboard sb = new EZScoreboard(
+				ChatColor.translateAlternateColorCodes('&', options.getTitle()));
 
-		if (plugin.getRankHandler().hasRankData(rank)) {
-			if (plugin.getRankHandler().getRankData(rank).getRankups().size() == 1) {
-				if (options.getRankupSectionSingular().isEmpty()
-						|| options.getRankupSectionSingular().equalsIgnoreCase(
-								"none")
-						|| options.getRankupSectionSingular().equalsIgnoreCase(
-								"off")) {
-				} else {
-					scoreboard.setLine(ChatColor.translateAlternateColorCodes(
-							'&', options.getRankupSectionSingular()));
-				}
+		for (String s : options.getText()) {
 
+			if (s.equalsIgnoreCase("blank")) {
+				sb.blank();
 			} else {
-				if (options.getRankupSectionPlural().isEmpty()
-						|| options.getRankupSectionPlural().equalsIgnoreCase(
-								"none")
-						|| options.getRankupSectionPlural().equalsIgnoreCase(
-								"off")) {
-				} else {
-					scoreboard.setLine(ChatColor.translateAlternateColorCodes(
-							'&', options.getRankupSectionPlural()));
-				}
+				String send = s.replace("%player%", name)
+						.replace("%rankfrom%", rank)
+						.replace("%currentrank%", rank)
+						.replace("%rankto%", nextRank)
+						.replace("%rankup%", nextRank).replace("%cost%", cost)
+						.replace("%rankupcost%", cost)
+						.replace("%balance%", bal).replace("%bal%", bal)
+						.replace("%online%", online + "")
+						.replace("%votes%", votes);
+				sb.setLine(ChatColor.translateAlternateColorCodes('&', send));
 			}
-			for (EZRankup rankup : plugin.getRankHandler().getRankData(rank)
-					.getRankups()) {
-				if (options.getRankup().isEmpty()
-						|| options.getRankup().equalsIgnoreCase("none")
-						|| options.getRankup().equalsIgnoreCase("off")) {
-				} else {
-					String rankto = options.getRankup().replace("%rankto%",
-							rankup.getRank());
-					scoreboard.setLine(ChatColor.translateAlternateColorCodes(
-							'&', rankto));
-					
-				}
-				scoreboard.blank();
-				if (options.getCostSection().isEmpty()
-						|| options.getCostSection().equalsIgnoreCase("none")
-						|| options.getCostSection().equalsIgnoreCase("off")) {
-				} else {
-					scoreboard.setLine(ChatColor.translateAlternateColorCodes(
-							'&', options.getCostSection()));
-				}
-				if (options.getCost().isEmpty()
-						|| options.getCost().equalsIgnoreCase("none")
-						|| options.getCost().equalsIgnoreCase("off")) {
-				} else {
-					String cost = options.getCost().replace(
-							"%cost%",
-							EZRanksLite.fixMoney(
-									Double.parseDouble(rankup.getCost()),
-									rankup.getCost()));
-					scoreboard.setLine(ChatColor.translateAlternateColorCodes(
-							'&', cost));
-				}
-			}
-		} else {
-			scoreboard.setLine(ChatColor.translateAlternateColorCodes('&',
-					"&cYou have no"));
-			scoreboard.setLine(ChatColor.translateAlternateColorCodes('&',
-					"&crankups"));
-		}
-		scoreboard.blank();
-		if (options.getBalanceSection().isEmpty()
-				|| options.getBalanceSection().equalsIgnoreCase("none")
-				|| options.getBalanceSection().equalsIgnoreCase("off")) {
-		} else {
-			scoreboard.setLine(ChatColor.translateAlternateColorCodes('&',
-					options.getBalanceSection()));
-		}
-		if (options.getBalance().isEmpty()
-				|| options.getBalance().equalsIgnoreCase("none")
-				|| options.getBalance().equalsIgnoreCase("off")) {
-		} else {
-			String bal = options.getBalance().replace(
-					"%balance%",
-					EZRanksLite.fixMoney(plugin.getEco().getBalance(pl),
-							String.valueOf(plugin.getEco().getBalance(pl))));
-			scoreboard.setLine(ChatColor.translateAlternateColorCodes('&', bal));
+
 		}
 
-		if (options.getCustomFooter() == null
-				|| options.getCustomFooter().isEmpty()) {
-		} else {
-			for (String s : options.getCustomFooter()) {
-				if (s.equalsIgnoreCase("blank")) {
-					scoreboard.blank();
-				} else if (s.equalsIgnoreCase("none")
-						|| s.equalsIgnoreCase("off")) {
-					continue;
-				} else {
-					scoreboard.setLine(ChatColor.translateAlternateColorCodes(
-							'&', s.replace( "%online%", Bukkit.getServer().getOnlinePlayers().length + "")
-							.replace("%player%", p.getName())
-							.replace("%balance%", plugin.getEco().getBalance(pl) + "")));
-				}
-
-			}
-		}
-		scoreboard.create();
-		scoreboard.send(p);
-		boards.put(p.getName(), scoreboard);
-		return scoreboard;
+		sb.create();
+		sb.send(p);
+		boards.put(p.getName(), sb);
+		return sb;
 	}
 
 }
