@@ -71,24 +71,7 @@ public class EZScoreboard {
 		scores.put(text, score);
 	}
 
-	public void create() {
-		Objective obj = scoreboard
-				.registerNewObjective(
-						(title.length() > 16 ? title.substring(0, 15) : title),
-						"dummy");
-		obj.setDisplayName(title);
-		obj.setDisplaySlot(DisplaySlot.SIDEBAR);
 
-		int index = scores.size();
-
-		for (Map.Entry<String, Integer> text : scores.entrySet()) {
-			Map.Entry<Team, String> team = createTeam(text.getKey());
-			Integer score = text.getValue() != null ? text.getValue() : index;
-			String player = team.getValue();
-			obj.getScore(player).setScore(score);
-			index -= 1;
-		}
-	}
 
 	public void reset() {
 		title = null;
@@ -112,18 +95,37 @@ public class EZScoreboard {
 
 	private Map.Entry<Team, String> createTeam(String text) {
 		String result = "";
-		if (text.length() <= 16)
+		if (text.length() <= 16) {
 			return new AbstractMap.SimpleEntry<>(null, text);
+		}
+			
 		Team team = scoreboard.registerNewTeam("text-"
 				+ scoreboard.getTeams().size());
 		Iterator<String> iterator = Splitter.fixedLength(16).split(text)
 				.iterator();
 		team.setPrefix(iterator.next());
 		result = iterator.next();
-		if (text.length() > 32)
+		if (text.length() > 32) {
 			team.setSuffix(iterator.next());
+			}
 		teams.add(team);
 		return new AbstractMap.SimpleEntry<>(team, result);
 	}
+	
+	public void build() {
+        Objective obj = scoreboard.registerNewObjective((title.length() > 16 ? title.substring(0, 15) : title), "dummy");
+        obj.setDisplayName(title);
+        obj.setDisplaySlot(DisplaySlot.SIDEBAR);
+
+        int index = scores.size();
+
+        for (Map.Entry<String, Integer> text : scores.entrySet()) {
+                Map.Entry<Team, String> team = createTeam(text.getKey());
+                Integer score = text.getValue() != null ? text.getValue() : index;
+                String p = team.getValue();
+                obj.getScore(p).setScore(score);
+                index -= 1;
+        }
+}
 
 }

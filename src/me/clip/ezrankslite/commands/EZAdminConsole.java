@@ -222,7 +222,6 @@ public class EZAdminConsole implements CommandExecutor {
 		 * reload command
 		 */
 		else if (args[0].equalsIgnoreCase("reload")) {
-			final boolean oldState = plugin.useScoreboard();
 			
 			plugin.getRankFile().reload();
 			plugin.getRankFile().save();
@@ -233,19 +232,19 @@ public class EZAdminConsole implements CommandExecutor {
 			plugin.sms(s, "&bYou have successfully reloaded EZRanks!");
 			plugin.sms(s, "&f" + loaded);
 			
-			if (oldState != plugin.useScoreboard()) {
-				if (plugin.useScoreboard()) {
-					plugin.startScoreboardTask();
-					for (Player p : Bukkit.getServer().getOnlinePlayers()) {
-						plugin.getBoardhandler().createScoreboard(p);
-					}
-					}
-				else {
-					for (Player pl : Bukkit.getServer().getOnlinePlayers()) {
-						pl.setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard());
-					}
-					plugin.stopScoreboardTask();
+			if (plugin.useScoreboard()) {
+				plugin.startScoreboardTask();
+				for (Player pl : Bukkit.getServer().getOnlinePlayers()) {
+					plugin.getBoardhandler().createScoreboard(pl);
 				}
+			} else {
+				plugin.stopScoreboardTask();
+
+				for (Player pl : Bukkit.getServer().getOnlinePlayers()) {
+					pl.setScoreboard(Bukkit.getScoreboardManager()
+							.getNewScoreboard());
+				}
+
 			}
 			
 			return true;

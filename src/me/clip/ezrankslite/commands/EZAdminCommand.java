@@ -88,7 +88,8 @@ public class EZAdminCommand implements CommandExecutor {
 			plugin.sms(p, "&a/ezadmin setcost <rankfrom> <rankto> <cost>");
 			plugin.sms(p, "&fdisable a rankup that is enabled");
 			plugin.sms(p, "&a/ezadmin addcmd <rankfrom> <rankto> <command>");
-			plugin.sms(p, "&fadd a command to be executed when a player ranks up");
+			plugin.sms(p,
+					"&fadd a command to be executed when a player ranks up");
 			plugin.sms(p, "&a/ezadmin delcmd <rankfrom> <rankto> <command>");
 			plugin.sms(p, "&fremove an active rankup command");
 			plugin.sms(p, "&a/sbtoggle <player>");
@@ -270,8 +271,7 @@ public class EZAdminCommand implements CommandExecutor {
 				plugin.sms(p, "&cYou don't have permission to do this!!");
 				return true;
 			}
-			final boolean oldState = plugin.useScoreboard();
-			
+
 			plugin.getRankFile().reload();
 			plugin.getRankFile().save();
 			plugin.reloadConfig();
@@ -280,25 +280,24 @@ public class EZAdminCommand implements CommandExecutor {
 			String loaded = plugin.getRankFile().loadRankupsFromFile();
 			plugin.sms(p, "&bYou have successfully reloaded EZRanks!");
 			plugin.sms(p, "&f" + loaded);
-			
-			if (oldState != plugin.useScoreboard()) {
-				if (plugin.useScoreboard()) {
-					plugin.startScoreboardTask();
-					for (Player pl : Bukkit.getServer().getOnlinePlayers()) {
-						plugin.getBoardhandler().createScoreboard(pl);
-					}
-					}
-				else {
-					for (Player pl : Bukkit.getServer().getOnlinePlayers()) {
-						pl.setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard());
-					}
-					plugin.stopScoreboardTask();
+
+			if (plugin.useScoreboard()) {
+				plugin.startScoreboardTask();
+				for (Player pl : Bukkit.getServer().getOnlinePlayers()) {
+					plugin.getBoardhandler().createScoreboard(pl);
 				}
+			} else {
+				plugin.stopScoreboardTask();
+
+				for (Player pl : Bukkit.getServer().getOnlinePlayers()) {
+					pl.setScoreboard(Bukkit.getScoreboardManager()
+							.getNewScoreboard());
+				}
+
 			}
-			
+
 			return true;
-		}
-		else if (args[0].equalsIgnoreCase("list")) {
+		} else if (args[0].equalsIgnoreCase("list")) {
 			if (!plugin.getRankHandler().isLoaded()) {
 				plugin.sms(p, "&cThere are no rankups loaded!");
 				return true;
@@ -308,53 +307,57 @@ public class EZAdminCommand implements CommandExecutor {
 					continue;
 				}
 				EZRank ezrank = plugin.getRankHandler().getRankData(rank);
-				if (ezrank.getRankups() == null || ezrank.getRankups().isEmpty()) {
+				if (ezrank.getRankups() == null
+						|| ezrank.getRankups().isEmpty()) {
 					continue;
 				}
 				for (EZRankup rankup : ezrank.getRankups()) {
-					plugin.sms(p, rank + " &bto &f" + rankup.getRank() + "  &bCost: &f" + rankup.getCost());
+					plugin.sms(p, rank + " &bto &f" + rankup.getRank()
+							+ "  &bCost: &f" + rankup.getCost());
 				}
 			}
 			return true;
 		}
-		//enable a rankup
+		// enable a rankup
 		else if (args[0].equalsIgnoreCase("enable")) {
-			
+
 			if (!p.hasPermission("ezranks.admin.setactive")) {
 				plugin.sms(p, "&cYou don't have permission to do this!!");
 				return true;
 			}
-			
+
 			if (args.length != 3) {
 				plugin.sms(p, "&4Incorrect usage!");
 				plugin.sms(p, "&7/ezadmin enable <rankfrom> <rankto>");
 				return true;
 			}
-			
+
 			String groupFrom = args[1];
 			String groupTo = args[2];
-			
+
 			for (String gFrom : plugin.getRankHandler().getLoadedRanks()) {
 				if (gFrom.equalsIgnoreCase(groupFrom)) {
 					groupFrom = gFrom;
 					break;
 				}
 			}
-			
+
 			if (plugin.getRankHandler().getRankData(groupFrom) == null) {
-				plugin.sms(p, "&4There are no rankups loaded for the rank &f" + groupFrom + "&4!");
+				plugin.sms(p, "&4There are no rankups loaded for the rank &f"
+						+ groupFrom + "&4!");
 				return true;
 			}
-			
+
 			EZRank rank = plugin.getRankHandler().getRankData(groupFrom);
-			
+
 			if (!rank.hasRankups()) {
-				plugin.sms(p, "&4There are no rankups loaded for the rank &f" + groupFrom + "&4!");
+				plugin.sms(p, "&4There are no rankups loaded for the rank &f"
+						+ groupFrom + "&4!");
 				return true;
 			}
-			
+
 			EZRankup rankup = null;
-			
+
 			for (EZRankup ezr : rank.getRankups()) {
 				if (ezr.getRank().equalsIgnoreCase(groupTo)) {
 					groupTo = ezr.getRank();
@@ -362,66 +365,71 @@ public class EZAdminCommand implements CommandExecutor {
 					break;
 				}
 			}
-			
+
 			if (rankup == null) {
-				plugin.sms(p, "&f" + groupFrom + "&4 does not have a rankup to &f" + groupTo + "&4!");
+				plugin.sms(p, "&f" + groupFrom
+						+ "&4 does not have a rankup to &f" + groupTo + "&4!");
 				return true;
 			}
-			
+
 			if (rankup.isActive()) {
-				plugin.sms(p, "&4Rankup &f" + groupFrom + "&4 to &f" + groupTo + " &4is already active!");
+				plugin.sms(p, "&4Rankup &f" + groupFrom + "&4 to &f" + groupTo
+						+ " &4is already active!");
 				return true;
 			}
-			
+
 			rankup.setActive(true);
 			rank.addRankup(groupTo, rankup);
 			plugin.getRankHandler().putRankData(groupFrom, rank);
 			FileConfiguration config = plugin.getRankFile().load();
-	    	config.set(groupFrom + "." + groupTo + ".active", true);
-	    	plugin.getRankFile().save();
-		
-			plugin.sms(p, "&bRankup &f" + groupFrom + "&b to &f" + groupTo + " &bis now active!");
-			
+			config.set(groupFrom + "." + groupTo + ".active", true);
+			plugin.getRankFile().save();
+
+			plugin.sms(p, "&bRankup &f" + groupFrom + "&b to &f" + groupTo
+					+ " &bis now active!");
+
 			return true;
 		}
-		//disable a rankup
+		// disable a rankup
 		else if (args[0].equalsIgnoreCase("disable")) {
-			
+
 			if (!p.hasPermission("ezranks.admin.setactive")) {
 				plugin.sms(p, "&cYou don't have permission to do this!!");
 				return true;
 			}
-			
+
 			if (args.length != 3) {
 				plugin.sms(p, "&4Incorrect usage!");
 				plugin.sms(p, "&7/ezadmin disable <rankfrom> <rankto>");
 				return true;
 			}
-			
+
 			String groupFrom = args[1];
 			String groupTo = args[2];
-			
+
 			for (String gFrom : plugin.getRankHandler().getLoadedRanks()) {
 				if (gFrom.equalsIgnoreCase(groupFrom)) {
 					groupFrom = gFrom;
 					break;
 				}
 			}
-			
+
 			if (plugin.getRankHandler().getRankData(groupFrom) == null) {
-				plugin.sms(p, "&4There are no rankups loaded for the rank &f" + groupFrom + "&4!");
+				plugin.sms(p, "&4There are no rankups loaded for the rank &f"
+						+ groupFrom + "&4!");
 				return true;
 			}
-			
+
 			EZRank rank = plugin.getRankHandler().getRankData(groupFrom);
-			
+
 			if (!rank.hasRankups()) {
-				plugin.sms(p, "&4There are no rankups loaded for the rank &f" + groupFrom + "&4!");
+				plugin.sms(p, "&4There are no rankups loaded for the rank &f"
+						+ groupFrom + "&4!");
 				return true;
 			}
-			
+
 			EZRankup rankup = null;
-			
+
 			for (EZRankup ezr : rank.getRankups()) {
 				if (ezr.getRank().equalsIgnoreCase(groupTo)) {
 					groupTo = ezr.getRank();
@@ -429,66 +437,71 @@ public class EZAdminCommand implements CommandExecutor {
 					break;
 				}
 			}
-			
+
 			if (rankup == null) {
-				plugin.sms(p, "&f" + groupFrom + "&4 does not have a rankup to &f" + groupTo + "&4!");
+				plugin.sms(p, "&f" + groupFrom
+						+ "&4 does not have a rankup to &f" + groupTo + "&4!");
 				return true;
 			}
-			
+
 			if (!rankup.isActive()) {
-				plugin.sms(p, "&4Rankup &f" + groupFrom + "&4 to &f" + groupTo + " &4is already disabled!");
+				plugin.sms(p, "&4Rankup &f" + groupFrom + "&4 to &f" + groupTo
+						+ " &4is already disabled!");
 				return true;
 			}
-			
+
 			rankup.setActive(false);
 			rank.addRankup(groupTo, rankup);
 			plugin.getRankHandler().putRankData(groupFrom, rank);
 			FileConfiguration config = plugin.getRankFile().load();
-	    	config.set(groupFrom + "." + groupTo + ".active", false);
-	    	plugin.getRankFile().save();
-		
-			plugin.sms(p, "&bRankup &f" + groupFrom + "&b to &f" + groupTo + " &bis now disabled!");
-			
+			config.set(groupFrom + "." + groupTo + ".active", false);
+			plugin.getRankFile().save();
+
+			plugin.sms(p, "&bRankup &f" + groupFrom + "&b to &f" + groupTo
+					+ " &bis now disabled!");
+
 			return true;
 		}
-		//change cost
+		// change cost
 		else if (args[0].equalsIgnoreCase("setcost")) {
-			
+
 			if (!p.hasPermission("ezranks.admin.setcost")) {
 				plugin.sms(p, "&cYou don't have permission to do this!!");
 				return true;
 			}
-			
+
 			if (args.length != 4) {
 				plugin.sms(p, "&4Incorrect usage!");
 				plugin.sms(p, "&7/ezadmin setcost <rankfrom> <rankto> <cost>");
 				return true;
 			}
-			
+
 			String groupFrom = args[1];
 			String groupTo = args[2];
-			
+
 			for (String gFrom : plugin.getRankHandler().getLoadedRanks()) {
 				if (gFrom.equalsIgnoreCase(groupFrom)) {
 					groupFrom = gFrom;
 					break;
 				}
 			}
-			
+
 			if (plugin.getRankHandler().getRankData(groupFrom) == null) {
-				plugin.sms(p, "&4There are no rankups loaded for the rank &f" + groupFrom + "&4!");
+				plugin.sms(p, "&4There are no rankups loaded for the rank &f"
+						+ groupFrom + "&4!");
 				return true;
 			}
-			
+
 			EZRank rank = plugin.getRankHandler().getRankData(groupFrom);
-			
+
 			if (!rank.hasRankups()) {
-				plugin.sms(p, "&4There are no rankups loaded for the rank &f" + groupFrom + "&4!");
+				plugin.sms(p, "&4There are no rankups loaded for the rank &f"
+						+ groupFrom + "&4!");
 				return true;
 			}
-			
+
 			EZRankup rankup = null;
-			
+
 			for (EZRankup ezr : rank.getRankups()) {
 				if (ezr.getRank().equalsIgnoreCase(groupTo)) {
 					groupTo = ezr.getRank();
@@ -496,68 +509,74 @@ public class EZAdminCommand implements CommandExecutor {
 					break;
 				}
 			}
-			
+
 			if (rankup == null) {
-				plugin.sms(p, "&f" + groupFrom + "&4 does not have a rankup to &f" + groupTo + "&4!");
+				plugin.sms(p, "&f" + groupFrom
+						+ "&4 does not have a rankup to &f" + groupTo + "&4!");
 				return true;
 			}
-			
+
 			if (!plugin.isDouble(args[3])) {
-				plugin.sms(p, "&f" + args[3] + "&4is not a valid amount to charge&4!");
+				plugin.sms(p, "&f" + args[3]
+						+ "&4is not a valid amount to charge&4!");
 				return true;
 			}
-			
+
 			String cost = args[3];
-			
+
 			rankup.setCost(cost);
 			rank.addRankup(groupTo, rankup);
 			plugin.getRankHandler().putRankData(groupFrom, rank);
 			FileConfiguration config = plugin.getRankFile().load();
-	    	config.set(groupFrom + "." + groupTo + ".cost", cost);
-	    	plugin.getRankFile().save();
-		
-			plugin.sms(p, "&bRankup &f" + groupFrom + "&b to &f" + groupTo + " &bwill now cost &f" + cost);
-			
+			config.set(groupFrom + "." + groupTo + ".cost", cost);
+			plugin.getRankFile().save();
+
+			plugin.sms(p, "&bRankup &f" + groupFrom + "&b to &f" + groupTo
+					+ " &bwill now cost &f" + cost);
+
 			return true;
 		}
-		//add command
-		else if (args[0].equalsIgnoreCase("addcommand") || args[0].equalsIgnoreCase("addcmd")) {
-			
+		// add command
+		else if (args[0].equalsIgnoreCase("addcommand")
+				|| args[0].equalsIgnoreCase("addcmd")) {
+
 			if (!p.hasPermission("ezranks.admin.addcommand")) {
 				plugin.sms(p, "&cYou don't have permission to do this!!");
 				return true;
 			}
-			
+
 			if (args.length < 4) {
 				plugin.sms(p, "&4Incorrect usage!");
 				plugin.sms(p, "&7/ezadmin addcmd <rankfrom> <rankto> <command>");
 				return true;
 			}
-			
+
 			String groupFrom = args[1];
 			String groupTo = args[2];
-			
+
 			for (String gFrom : plugin.getRankHandler().getLoadedRanks()) {
 				if (gFrom.equalsIgnoreCase(groupFrom)) {
 					groupFrom = gFrom;
 					break;
 				}
 			}
-			
+
 			if (plugin.getRankHandler().getRankData(groupFrom) == null) {
-				plugin.sms(p, "&4There are no rankups loaded for the rank &f" + groupFrom + "&4!");
+				plugin.sms(p, "&4There are no rankups loaded for the rank &f"
+						+ groupFrom + "&4!");
 				return true;
 			}
-			
+
 			EZRank rank = plugin.getRankHandler().getRankData(groupFrom);
-			
+
 			if (!rank.hasRankups()) {
-				plugin.sms(p, "&4There are no rankups loaded for the rank &f" + groupFrom + "&4!");
+				plugin.sms(p, "&4There are no rankups loaded for the rank &f"
+						+ groupFrom + "&4!");
 				return true;
 			}
-			
+
 			EZRankup rankup = null;
-			
+
 			for (EZRankup ezr : rank.getRankups()) {
 				if (ezr.getRank().equalsIgnoreCase(groupTo)) {
 					groupTo = ezr.getRank();
@@ -565,81 +584,87 @@ public class EZAdminCommand implements CommandExecutor {
 					break;
 				}
 			}
-			
+
 			if (rankup == null) {
-				plugin.sms(p, "&f" + groupFrom + "&4 does not have a rankup to &f" + groupTo + "&4!");
+				plugin.sms(p, "&f" + groupFrom
+						+ "&4 does not have a rankup to &f" + groupTo + "&4!");
 				return true;
 			}
-			
+
 			String toAdd = args[3].replace("/", "");
 			plugin.getLogger().info(toAdd);
-			for (int i=0;i<args.length;i++) {
+			for (int i = 0; i < args.length; i++) {
 				if (i <= 3) {
 					continue;
 				}
-				toAdd = toAdd+" "+args[i];
+				toAdd = toAdd + " " + args[i];
 				plugin.getLogger().info(toAdd);
 			}
-			
+
 			plugin.getLogger().info(toAdd);
-			
+
 			List<String> cmds = rankup.getCommands();
-			
+
 			if (cmds.contains(toAdd)) {
-				plugin.sms(p, "&f" + toAdd + "&4 already exists for &f" + groupFrom + " &4to &f" + groupTo + "!");
+				plugin.sms(p, "&f" + toAdd + "&4 already exists for &f"
+						+ groupFrom + " &4to &f" + groupTo + "!");
 				return true;
 			}
 			cmds.add(toAdd);
 			rankup.setCommands(cmds);
-			
+
 			rank.addRankup(groupTo, rankup);
 			plugin.getRankHandler().putRankData(groupFrom, rank);
 			FileConfiguration config = plugin.getRankFile().load();
-	    	config.set(groupFrom + "." + groupTo + ".rankup_commands", cmds);
-	    	plugin.getRankFile().save();
-		
-			plugin.sms(p, toAdd + " &bwas successfully added to &f" + groupFrom + " &bto &f" + groupTo);
-			
+			config.set(groupFrom + "." + groupTo + ".rankup_commands", cmds);
+			plugin.getRankFile().save();
+
+			plugin.sms(p, toAdd + " &bwas successfully added to &f" + groupFrom
+					+ " &bto &f" + groupTo);
+
 			return true;
 		}
-		//delete command
-		else if (args[0].equalsIgnoreCase("delcommand") || args[0].equalsIgnoreCase("delcmd")) {
-			
+		// delete command
+		else if (args[0].equalsIgnoreCase("delcommand")
+				|| args[0].equalsIgnoreCase("delcmd")) {
+
 			if (!p.hasPermission("ezranks.admin.delcommand")) {
 				plugin.sms(p, "&cYou don't have permission to do this!!");
 				return true;
 			}
-			
+
 			if (args.length < 4) {
 				plugin.sms(p, "&4Incorrect usage!");
 				plugin.sms(p, "&7/ezadmin delcmd <rankfrom> <rankto> <command>");
 				return true;
 			}
-			
+
 			String groupFrom = args[1];
 			String groupTo = args[2];
-			
+
 			for (String gFrom : plugin.getRankHandler().getLoadedRanks()) {
 				if (gFrom.equalsIgnoreCase(groupFrom)) {
 					groupFrom = gFrom;
 					break;
 				}
 			}
-			
+
 			if (plugin.getRankHandler().getRankData(groupFrom) == null) {
-				plugin.sms(p, "&4There are no rankups loaded for the rank &f" + groupFrom + "&4!");
+				plugin.sms(p, "&4There are no rankups loaded for the rank &f"
+						+ groupFrom + "&4!");
 				return true;
 			}
-			
+
 			EZRank rank = plugin.getRankHandler().getRankData(groupFrom);
-			
+
 			if (!rank.hasRankups()) {
-				plugin.sms(p, "&4There are no rankups loaded for the rank &f" + groupFrom + "&4!");
+				plugin.sms(p, "&4There are no rankups loaded for the rank &f"
+						+ groupFrom + "&4!");
 				return true;
 			}
-			
+
 			EZRankup rankup = null;
-			
+
 			for (EZRankup ezr : rank.getRankups()) {
 				if (ezr.getRank().equalsIgnoreCase(groupTo)) {
 					groupTo = ezr.getRank();
@@ -647,75 +672,81 @@ public class EZAdminCommand implements CommandExecutor {
 					break;
 				}
 			}
-			
+
 			if (rankup == null) {
-				plugin.sms(p, "&f" + groupFrom + "&4 does not have a rankup to &f" + groupTo + "&4!");
+				plugin.sms(p, "&f" + groupFrom
+						+ "&4 does not have a rankup to &f" + groupTo + "&4!");
 				return true;
 			}
-			
+
 			String toDel = args[3].replace("/", "");
-			
-			for (int i=0;i<args.length;i++) {
+
+			for (int i = 0; i < args.length; i++) {
 				if (i <= 3) {
 					continue;
 				}
-				toDel = toDel+" "+args[i];
+				toDel = toDel + " " + args[i];
 			}
-			
+
 			plugin.getLogger().info(toDel);
-			
+
 			List<String> cmds = rankup.getCommands();
-			
+
 			if (!cmds.contains(toDel)) {
-				plugin.sms(p, "&f" + toDel + "&4 does not exist for &f" + groupFrom + " &4to &f" + groupTo + "!");
+				plugin.sms(p, "&f" + toDel + "&4 does not exist for &f"
+						+ groupFrom + " &4to &f" + groupTo + "!");
 				return true;
 			}
 			cmds.remove(toDel);
 			rankup.setCommands(cmds);
-			
+
 			rank.addRankup(groupTo, rankup);
 			plugin.getRankHandler().putRankData(groupFrom, rank);
 			FileConfiguration config = plugin.getRankFile().load();
-	    	config.set(groupFrom + "." + groupTo + ".rankup_commands", cmds);
-	    	plugin.getRankFile().save();
-		
-			plugin.sms(p, toDel + " &bwas successfully removed from &f" + groupFrom + " &bto &f" + groupTo);
-			
+			config.set(groupFrom + "." + groupTo + ".rankup_commands", cmds);
+			plugin.getRankFile().save();
+
+			plugin.sms(p, toDel + " &bwas successfully removed from &f"
+					+ groupFrom + " &bto &f" + groupTo);
+
 			return true;
 		}
-		//delete command
-		else if (args[0].equalsIgnoreCase("info") || args[0].equalsIgnoreCase("information")) {
-			
+		// delete command
+		else if (args[0].equalsIgnoreCase("info")
+				|| args[0].equalsIgnoreCase("information")) {
+
 			if (args.length != 3) {
 				plugin.sms(p, "&4Incorrect usage!");
 				plugin.sms(p, "&7/ezadmin info <rankfrom> <rankto>");
 				return true;
 			}
-			
+
 			String groupFrom = args[1];
 			String groupTo = args[2];
-			
+
 			for (String gFrom : plugin.getRankHandler().getLoadedRanks()) {
 				if (gFrom.equalsIgnoreCase(groupFrom)) {
 					groupFrom = gFrom;
 					break;
 				}
 			}
-			
+
 			if (plugin.getRankHandler().getRankData(groupFrom) == null) {
-				plugin.sms(p, "&4There are no rankups loaded for the rank &f" + groupFrom + "&4!");
+				plugin.sms(p, "&4There are no rankups loaded for the rank &f"
+						+ groupFrom + "&4!");
 				return true;
 			}
-			
+
 			EZRank rank = plugin.getRankHandler().getRankData(groupFrom);
-			
+
 			if (!rank.hasRankups()) {
-				plugin.sms(p, "&4There are no rankups loaded for the rank &f" + groupFrom + "&4!");
+				plugin.sms(p, "&4There are no rankups loaded for the rank &f"
+						+ groupFrom + "&4!");
 				return true;
 			}
-			
+
 			EZRankup rankup = null;
-			
+
 			for (EZRankup ezr : rank.getRankups()) {
 				if (ezr.getRank().equalsIgnoreCase(groupTo)) {
 					groupTo = ezr.getRank();
@@ -723,13 +754,17 @@ public class EZAdminCommand implements CommandExecutor {
 					break;
 				}
 			}
-			
+
 			if (rankup == null) {
-				plugin.sms(p, "&f" + groupFrom + "&4 does not have a rankup to &f" + groupTo + "&4!");
+				plugin.sms(p, "&f" + groupFrom
+						+ "&4 does not have a rankup to &f" + groupTo + "&4!");
 				return true;
 			}
-			
-			plugin.sms(p, "&bRankup &f" + rank.getRank() + " &bto &f" + rankup.getRank());
+
+			plugin.sms(
+					p,
+					"&bRankup &f" + rank.getRank() + " &bto &f"
+							+ rankup.getRank());
 			plugin.sms(p, "&bActive: &f" + rankup.isActive());
 			plugin.sms(p, "&bCost: &f" + rankup.getCost());
 			plugin.sms(p, "&bRequirement message:");
@@ -740,10 +775,9 @@ public class EZAdminCommand implements CommandExecutor {
 			for (String c : rankup.getCommands()) {
 				plugin.sms(p, c);
 			}
-			
+
 			return true;
-		}
-		else {
+		} else {
 			plugin.sms(p, "&cIncorrect usage! Use &b/ezadmin help");
 		}
 

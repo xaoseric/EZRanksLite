@@ -61,13 +61,16 @@ public class EZRanksLite extends JavaPlugin {
 	private EZAdminCommand admincommand = new EZAdminCommand(this);
 	private RankupCommand rankupcommand = new RankupCommand(this);
 	private RanksCommand rankscommand = new RanksCommand(this);
-	private ScoreboardToggleCommand togglecommand = new ScoreboardToggleCommand(this);
-	private ScoreboardRefreshCommand refreshcommand = new ScoreboardRefreshCommand(this);
-	
+	private ScoreboardToggleCommand togglecommand = new ScoreboardToggleCommand(
+			this);
+	private ScoreboardRefreshCommand refreshcommand = new ScoreboardRefreshCommand(
+			this);
+
 	private Config config = new Config(this);
 	private RankupFile rankupfile = new RankupFile(this);
-	private ConfigWrapper messagesFile = new ConfigWrapper(this, "", "messages.yml");
-	
+	private ConfigWrapper messagesFile = new ConfigWrapper(this, "",
+			"messages.yml");
+
 	private static boolean debug;
 	private static String servername;
 	private static boolean fixThousands;
@@ -83,23 +86,24 @@ public class EZRanksLite extends JavaPlugin {
 	private static boolean useRanks;
 	private static boolean useRankupCooldown;
 	private static int rankupCooldownTime;
-	
-	//scoreboard options
+
+	// scoreboard options
 	private static boolean useScoreboard;
 	private static int sbRefresh;
 	private static ScoreboardOptions sbOptions = null;
-	
+
 	private static BukkitTask sbTask = null;
-	
+
 	public static boolean useVoteParty = false;
 
 	@Override
 	public void onEnable() {
-		if (Bukkit.getServer().getPluginManager().getPlugin("VoteParty") != null 
-				&& Bukkit.getServer().getPluginManager().getPlugin("VoteParty").isEnabled()) {
+		if (Bukkit.getServer().getPluginManager().getPlugin("VoteParty") != null
+				&& Bukkit.getServer().getPluginManager().getPlugin("VoteParty")
+						.isEnabled()) {
 			useVoteParty = true;
 		}
-			
+
 		if (!vaultperms.setupVault()) {
 			debug(true,
 					"Could not detect Vault for permissions Hooking! Disabling EZRanksLite!");
@@ -109,13 +113,14 @@ public class EZRanksLite extends JavaPlugin {
 					"Could not hook into an Economy plugin through Vault! Disabling EZRanksLite!");
 			Bukkit.getServer().getPluginManager().disablePlugin(this);
 		}
-		
+
 		init();
 		rankupfile.reload();
 		rankupfile.save();
-		messagesFile.createNewFile("Loading EZRanksLite messages.yml", "EZRanksLite messages file");
+		messagesFile.createNewFile("Loading EZRanksLite messages.yml",
+				"EZRanksLite messages file");
 		loadMessages();
-		
+
 		getLogger().info(rankupfile.loadRankupsFromFile());
 		registerCmds();
 		registerListeners();
@@ -123,9 +128,8 @@ public class EZRanksLite extends JavaPlugin {
 			debug(false, "Could not start MetricsLite!");
 		}
 		if (useScoreboard) {
-			debug(false,
-					"Scoreboard features are enabled!");
-		startScoreboardTask();
+			debug(false, "Scoreboard features are enabled!");
+			startScoreboardTask();
 		}
 	}
 
@@ -133,22 +137,22 @@ public class EZRanksLite extends JavaPlugin {
 	public void onDisable() {
 		stopScoreboardTask();
 	}
-	
+
 	private void registerCmds() {
 		getCommand("ezadmin").setExecutor(admincommand);
 		getCommand("rankup").setExecutor(rankupcommand);
 		getCommand("ranks").setExecutor(rankscommand);
 		getCommand("sbtoggle").setExecutor(togglecommand);
 		getCommand("sbrefresh").setExecutor(refreshcommand);
-		debug(false,
-				"Commands registered");
+		debug(false, "Commands registered");
 	}
-	
+
 	private void loadMessages() {
 		Lang.setFile(messagesFile.getConfig());
 
 		for (final Lang value : Lang.values()) {
-			messagesFile.getConfig().addDefault(value.getPath(), value.getDefault());
+			messagesFile.getConfig().addDefault(value.getPath(),
+					value.getDefault());
 		}
 
 		messagesFile.getConfig().options().copyDefaults(true);
@@ -177,7 +181,7 @@ public class EZRanksLite extends JavaPlugin {
 		loadSBOptions();
 		sbRefresh = config.getScoreboardRefreshTime();
 	}
-	
+
 	public void loadOptions() {
 		debug = config.isDebug();
 		servername = config.getServerName();
@@ -198,17 +202,15 @@ public class EZRanksLite extends JavaPlugin {
 		loadSBOptions();
 		sbRefresh = config.getScoreboardRefreshTime();
 	}
-	
+
 	public ScoreboardOptions loadSBOptions() {
 		ScoreboardOptions options = new ScoreboardOptions();
 		options.setTitle(config.sbTitle());
 		options.setText(config.sbDisplay());
 		sbOptions = options;
-		debug(false,
-				"Scoreboard options loaded!");
+		debug(false, "Scoreboard options loaded!");
 		return options;
 	}
-
 
 	private void registerListeners() {
 		Bukkit.getServer().getPluginManager()
@@ -266,22 +268,32 @@ public class EZRanksLite extends JavaPlugin {
 			return false;
 		}
 	}
-	
+
 	public void startScoreboardTask() {
-		if (useScoreboard && sbTask == null) {
-		sbTask = getServer().getScheduler().runTaskTimer(this,
-				new RefreshScoreboardTask(this), 0L, (20L * sbRefresh));
-		debug(false,
-				"Scoreboard refresh task has started and will refresh every " + sbRefresh + " seconds.");
+		if (useScoreboard) {
+			if (sbTask == null) {
+				sbTask = getServer().getScheduler().runTaskTimer(this,
+						new RefreshScoreboardTask(this), 0L, (20L * sbRefresh));
+				debug(false,
+						"Scoreboard refresh task has started and will refresh every "
+								+ sbRefresh + " seconds.");
+			} else {
+				sbTask.cancel();
+				sbTask = null;
+				sbTask = getServer().getScheduler().runTaskTimer(this,
+						new RefreshScoreboardTask(this), 0L, (20L * sbRefresh));
+				debug(false,
+						"Scoreboard refresh task has started and will refresh every "
+								+ sbRefresh + " seconds.");
+			}
 		}
 	}
-	
+
 	public void stopScoreboardTask() {
 		if (!useScoreboard && sbTask != null) {
-		sbTask.cancel();
-		sbTask = null;
-		debug(false,
-				"Scoreboard refresh task has been cancelled!");
+			sbTask.cancel();
+			sbTask = null;
+			debug(false, "Scoreboard refresh task has been cancelled!");
 		}
 	}
 
@@ -297,41 +309,38 @@ public class EZRanksLite extends JavaPlugin {
 		Bukkit.broadcastMessage(ChatColor
 				.translateAlternateColorCodes('&', msg));
 	}
-	
+
 	public static String fixMoney(double amount, String amt) {
-		
+
 		if (amount >= 1000000000000.0D)
 			if (fixMillions) {
-			return String.format("%.2f"+trillions,
-					new Object[] { Double.valueOf(amount / 1000000000000.0D) });
-			}
-			else {
+				return String.format("%.2f" + trillions, new Object[] { Double
+						.valueOf(amount / 1000000000000.0D) });
+			} else {
 				long send = (long) amount;
 				return send + "";
 			}
 		else if (amount >= 1000000000.0D)
 			if (fixMillions) {
-			return String.format("%.2f"+billions,
-					new Object[] { Double.valueOf(amount / 1000000000.0D) });
-			}
-			else {
+				return String
+						.format("%.2f" + billions, new Object[] { Double
+								.valueOf(amount / 1000000000.0D) });
+			} else {
 				long send = (long) amount;
 				return send + "";
 			}
 		else if (amount >= 1000000.0D) {
 			if (fixMillions) {
-			return String.format("%.2f"+millions,
-					new Object[] { Double.valueOf(amount / 1000000.0D) });
-			}
-			else {
+				return String.format("%.2f" + millions,
+						new Object[] { Double.valueOf(amount / 1000000.0D) });
+			} else {
 				long send = (long) amount;
 				return send + "";
 			}
-		}
-		else if (amount >= 1000.0D) {
+		} else if (amount >= 1000.0D) {
 			if (fixThousands) {
-			return String.format("%.2f"+thousands,
-					new Object[] { Double.valueOf(amount / 1000.0D) });
+				return String.format("%.2f" + thousands,
+						new Object[] { Double.valueOf(amount / 1000.0D) });
 			}
 		}
 		if (amt.contains(".")) {
@@ -372,7 +381,7 @@ public class EZRanksLite extends JavaPlugin {
 	public List<String> getRanksFooter() {
 		return ranksFooter;
 	}
-	
+
 	public String getServername() {
 		return servername;
 	}
@@ -380,7 +389,7 @@ public class EZRanksLite extends JavaPlugin {
 	public void setServername(String servername) {
 		EZRanksLite.servername = servername;
 	}
-	
+
 	public boolean useScoreboard() {
 		return useScoreboard;
 	}
@@ -396,10 +405,9 @@ public class EZRanksLite extends JavaPlugin {
 	public int getRankupCooldownTime() {
 		return rankupCooldownTime;
 	}
-	
+
 	public EZAPI getAPI() {
 		return new EZAPI(this);
 	}
-
 
 }
