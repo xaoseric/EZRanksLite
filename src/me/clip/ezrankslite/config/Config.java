@@ -66,14 +66,27 @@ public class Config {
 						"blank", "&c/rankup:", "%rankto%", "blank", "&cCost:",
 						"&a$&f%cost%", "&cBalance:",
 						"&a$&f%balance%" }));
+		config.addDefault("scoreboard.no_rankups", "&cnone");
+		config.addDefault("scoreboard.can_rankup", "&a/rankup");
+		config.addDefault("scoreboard.progress_bar.bar_color", "&a");
+		config.addDefault("scoreboard.progress_bar.end_color", "&f");
 		config.addDefault("money.fix_thousands", true);
 		config.addDefault("money.fix_millions", true);
 		config.addDefault("money.thousands_format", "k");
 		config.addDefault("money.millions_format", "M");
 		config.addDefault("money.billions_format", "B");
 		config.addDefault("money.trillions_format", "T");
+		config.addDefault("money.quadrillions_format", "Q");
 		config.options().copyDefaults(true);
 		plugin.saveConfig();
+	}
+	
+	public String getProgressBarEndColor() {
+		return plugin.getConfig().getString("scoreboard.progress_bar.end_color");
+	}
+	
+	public String getProgressBarColor() {
+		return plugin.getConfig().getString("scoreboard.progress_bar.bar_color");
 	}
 
 	public boolean isDebug() {
@@ -124,6 +137,14 @@ public class Config {
 	public List<String> sbDisplay() {
 		return plugin.getConfig().getStringList("scoreboard.display");
 	}
+	
+	public String noRankups() {
+		return plugin.getConfig().getString("scoreboard.no_rankups");
+	}
+	
+	public String canRankup() {
+		return plugin.getConfig().getString("scoreboard.can_rankup");
+	}
 
 	// settings
 	public String getServerName() {
@@ -136,6 +157,10 @@ public class Config {
 
 	public boolean fixMillions() {
 		return plugin.getConfig().getBoolean("money.fix_millions");
+	}
+	
+	public String getQFormat() {
+		return plugin.getConfig().getString("money.quadrillions_format");
 	}
 
 	public String getTFormat() {
@@ -153,5 +178,6 @@ public class Config {
 	public String getKFormat() {
 		return plugin.getConfig().getString("money.thousands_format");
 	}
+	
 
 }

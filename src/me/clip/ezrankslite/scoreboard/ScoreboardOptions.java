@@ -29,6 +29,14 @@ public class ScoreboardOptions {
 	private static String title;
 
 	private static List<String> text;
+	
+	private static String noRankups;
+	
+	private static String rankup;
+	
+	private static String pBarColor;
+	
+	private static String pBarEndColor;
 
 	public String getTitle() {
 		return title;
@@ -44,6 +52,38 @@ public class ScoreboardOptions {
 
 	public void setText(List<String> text) {
 		ScoreboardOptions.text = text;
+	}
+
+	public String getNoRankups() {
+		return noRankups;
+	}
+
+	public void setNoRankups(String noRankups) {
+		ScoreboardOptions.noRankups = noRankups;
+	}
+
+	public String getRankup() {
+		return rankup;
+	}
+
+	public void setRankup(String rankup) {
+		ScoreboardOptions.rankup = rankup;
+	}
+
+	public String getpBarColor() {
+		return pBarColor;
+	}
+
+	public void setpBarColor(String pBarColor) {
+		ScoreboardOptions.pBarColor = pBarColor;
+	}
+
+	public String getpBarEndColor() {
+		return pBarEndColor;
+	}
+
+	public void setpBarEndColor(String pBarEndColor) {
+		ScoreboardOptions.pBarEndColor = pBarEndColor;
 	}
 
 }

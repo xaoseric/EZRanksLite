@@ -37,6 +37,7 @@ import me.clip.ezrankslite.metricslite.MetricsLite;
 import me.clip.ezrankslite.rankdata.PlayerRankupHandler;
 import me.clip.ezrankslite.rankdata.RankHandler;
 import me.clip.ezrankslite.rankdata.RankupFile;
+import me.clip.ezrankslite.scoreboard.PlaceHolderHandler;
 import me.clip.ezrankslite.scoreboard.RefreshScoreboardTask;
 import me.clip.ezrankslite.scoreboard.ScoreboardHandler;
 import me.clip.ezrankslite.scoreboard.ScoreboardOptions;
@@ -54,6 +55,7 @@ public class EZRanksLite extends JavaPlugin {
 	private PlayerRankupHandler playerhandler = new PlayerRankupHandler(this);
 	private RankHandler rankhandler = new RankHandler(this);
 	private ScoreboardHandler boardhandler = new ScoreboardHandler(this);
+	private PlaceHolderHandler placeholders = new PlaceHolderHandler(this);
 
 	private VaultPerms vaultperms = new VaultPerms(this);
 	private VaultEco vaulteco = new VaultEco(this);
@@ -79,6 +81,7 @@ public class EZRanksLite extends JavaPlugin {
 	private static String billions;
 	private static String thousands;
 	private static String trillions;
+	private static String quads;
 	private static String ranksNo;
 	private static String ranksYes;
 	private static List<String> ranksHeader;
@@ -95,6 +98,8 @@ public class EZRanksLite extends JavaPlugin {
 	private static BukkitTask sbTask = null;
 
 	public static boolean useVoteParty = false;
+	
+	private static EZRanksLite instance;
 
 	@Override
 	public void onEnable() {
@@ -103,7 +108,7 @@ public class EZRanksLite extends JavaPlugin {
 						.isEnabled()) {
 			useVoteParty = true;
 		}
-
+		
 		if (!vaultperms.setupVault()) {
 			debug(true,
 					"Could not detect Vault for permissions Hooking! Disabling EZRanksLite!");
@@ -131,11 +136,13 @@ public class EZRanksLite extends JavaPlugin {
 			debug(false, "Scoreboard features are enabled!");
 			startScoreboardTask();
 		}
+		instance = this;
 	}
 
 	@Override
 	public void onDisable() {
 		stopScoreboardTask();
+		instance = null;
 	}
 
 	private void registerCmds() {
@@ -170,6 +177,7 @@ public class EZRanksLite extends JavaPlugin {
 		millions = config.getMFormat();
 		billions = config.getBFormat();
 		trillions = config.getTFormat();
+		quads = config.getQFormat();
 		useRanks = config.useRanks();
 		ranksYes = config.ranksAccess();
 		ranksNo = config.ranksNoAccess();
@@ -192,6 +200,7 @@ public class EZRanksLite extends JavaPlugin {
 		millions = config.getMFormat();
 		billions = config.getBFormat();
 		trillions = config.getTFormat();
+		quads = config.getQFormat();
 		useRanks = config.useRanks();
 		ranksYes = config.ranksAccess();
 		ranksNo = config.ranksNoAccess();
@@ -207,6 +216,10 @@ public class EZRanksLite extends JavaPlugin {
 		ScoreboardOptions options = new ScoreboardOptions();
 		options.setTitle(config.sbTitle());
 		options.setText(config.sbDisplay());
+		options.setRankup(config.canRankup());
+		options.setNoRankups(config.noRankups());
+		options.setpBarColor(config.getProgressBarColor());
+		options.setpBarEndColor(config.getProgressBarEndColor());
 		sbOptions = options;
 		debug(false, "Scoreboard options loaded!");
 		return options;
@@ -312,6 +325,14 @@ public class EZRanksLite extends JavaPlugin {
 
 	public static String fixMoney(double amount, String amt) {
 
+		if (amount >= 1000000000000000.0D)
+			if (fixMillions) {
+				return String.format("%.2f" + quads, new Object[] { Double
+						.valueOf(amount / 1000000000000000.0D) });
+			} else {
+				long send = (long) amount;
+				return send + "";
+			}
 		if (amount >= 1000000000000.0D)
 			if (fixMillions) {
 				return String.format("%.2f" + trillions, new Object[] { Double
@@ -365,6 +386,10 @@ public class EZRanksLite extends JavaPlugin {
 	public ScoreboardOptions getSbOptions() {
 		return sbOptions;
 	}
+	
+	public PlaceHolderHandler getPlaceholders() {
+		return placeholders;
+	}
 
 	public String getRanksNo() {
 		return ranksNo;
@@ -406,8 +431,12 @@ public class EZRanksLite extends JavaPlugin {
 		return rankupCooldownTime;
 	}
 
-	public EZAPI getAPI() {
-		return new EZAPI(this);
+	public static EZAPI getAPI() {
+		return new EZAPI(instance);
 	}
+	
+	
+	
+	
 
 }

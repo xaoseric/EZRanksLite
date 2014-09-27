@@ -35,6 +35,45 @@ public class EZAPI {
 	}
 	
 	/**
+	 * set a custom placeholder for a specific player in the EZRanksLite scoreboard.
+	 * if a custom placeholder is used for a specific player, it must be set for every player if the
+	 * identifier is used in the ezrankslite scoreboard.
+	 * Any player who does not have a value set will return a blank value
+	 * @param playername player name to set the placeholder value for
+	 * @param identifier for the ezrankslite scoreboard config to recognize where to put the value on the
+	 * scoreboard. identifier must start and end with %
+	 * @param value of identifier
+	 */
+	public void setPlayerPlaceholder(String playername, String identifier, String value) {
+		plugin.getPlaceholders().setPlayerPlaceholder(playername, identifier, value);
+	}
+	
+	/**
+	 * set a custom placeholder for a specific player in the EZRanksLite scoreboard.
+	 * if a custom placeholder is used for a specific player, it must be set for every player if the
+	 * identifier is used in the ezrankslite scoreboard.
+	 * Any player who does not have a value set will return a blank value
+	 * @param p player to set the placeholder value for
+	 * @param identifier for the ezrankslite scoreboard config to recognize where to put the value on the
+	 * scoreboard. identifier must start and end with %
+	 * @param value of identifier
+	 */
+	public void setPlayerPlaceholder(Player p, String identifier, String value) {
+		plugin.getPlaceholders().setPlayerPlaceholder(p.getName(), identifier, value);
+	}
+	
+	/**
+	 * set a custom placeholder for all players in the EZRanksLite scoreboard.
+	 * @param identifier for the ezrankslite scoreboard config to recognize where to put the value on the
+	 * scoreboard. identifier must start and end with %
+	 * @param value of identifier
+	 */
+	public void setGlobalPlaceholder(String identifier, String value) {
+		plugin.getPlaceholders().setGlobalPlaceholder(identifier, value);
+	}
+	
+
+	/**
 	 * get the current permission rank of a player
 	 * @param p player to get the rank for
 	 * @return current permissions group of a player

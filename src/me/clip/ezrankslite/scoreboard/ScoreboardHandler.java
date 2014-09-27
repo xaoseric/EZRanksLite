@@ -73,46 +73,58 @@ public class ScoreboardHandler {
 
 	public int getProgress(double balance, String cost) {
 
-		int bal = (int) balance;
+		float bal = (float) balance;
 
-		int rcost = Integer.parseInt(cost);
+		float c = Float.parseFloat(cost);
 
-		int progress = (int) Math.round(bal * 100.0 / rcost);
+	    float percent = (100 * bal) / c;
+	    
+	    int progress = (int) Math.floor(percent);
 
-		if (progress >= 100) {
-			double c = Double.parseDouble(cost);
-			
-			if (balance < c) {
-				return 99;
-			}
-			return 100;
-		}
+	    if (progress >= 100) {
+	    	return 100;
+	    }
+	    else if (progress < 0) {
+	    	return 0;
+	    }
 		return progress;
+		
 	}
 
-	public String getProgressBar(int progress) {
-		String block = "\u258c";
+	public String getProgressBar(int progress, String barColor, String endColor) {
 		String s = "\u2503";
-		if (progress >= 5 && progress <= 20) {
-			return "&c"+s+"&f"+block+"    &c"+s;
-		} else if (progress >= 21 && progress <= 40) {
-			return "&c"+s+"&f"+block+block+"   &c"+s;
-		} else if (progress >= 41 && progress <= 60) {
-			return "&c"+s+"&f"+block+block+block+"  &c"+s;
-		} else if (progress >= 61 && progress <= 80) {
-			return "&c"+s+"&f"+block+block+block+block+" &c"+s;
-		} else if (progress >= 81 && progress <= 99) {
-			return "&c"+s+"&f"+block+block+block+block+block+"&c"+s;
-		}
-		else if (progress >= 100) {
+		if (progress >= 10 && progress <= 19) {
+			return endColor + s + barColor + "&l:&8&l::::::::" + endColor + s;
+		} else if (progress >= 20 && progress <= 29) {
+			return endColor + s + barColor + "&l::&8&l:::::::" + endColor + s;
+		} else if (progress >= 30 && progress <= 39) {
+			return endColor + s + barColor + "&l:::&8&l::::::" + endColor + s;
+		} else if (progress >= 40 && progress <= 49) {
+			return endColor + s + barColor + "&l::::&8&l:::::" + endColor + s;
+		} else if (progress >= 50 && progress <= 59) {
+			return endColor + s + barColor + "&l:::::&8&l::::" + endColor + s;
+		} else if (progress >= 60 && progress <= 69) {
+			return endColor + s + barColor + "&l::::::&8&l:::" + endColor + s;
+		} else if (progress >= 70 && progress <= 79) {
+			return endColor + s + barColor + "&l:::::::&8&l::" + endColor + s;
+		} else if (progress >= 80 && progress <= 89) {
+			return endColor + s + barColor + "&l::::::::&8&l:" + endColor + s;
+		} else if (progress >= 90 && progress <= 99) {
+			return endColor + s + barColor + "&l:::::::::" + endColor + s;
+		} else if (progress >= 100) {
 			return "/rankup";
-		}
-		else {
-			return "&c"+s+"&f     &c"+s;
+		} else {
+			return endColor + s + "&8&l:::::::::" + endColor + s;
 		}
 	}
 
 	public EZScoreboard createScoreboard(Player p) {
+
+		ScoreboardOptions options = plugin.getSbOptions();
+
+		if (options == null) {
+			options = plugin.loadSBOptions();
+		}
 
 		int online = Bukkit.getServer().getOnlinePlayers().length;
 
@@ -125,14 +137,14 @@ public class ScoreboardHandler {
 		String bal = EZRanksLite.fixMoney(plugin.getEco().getBalance(pl),
 				String.valueOf(plugin.getEco().getBalance(pl)));
 
-		String nextRank = "&cnone";
+		String nextRank = options.getNoRankups();
 
 		String cost = "0";
 
 		String votes = "";
 
-		int pro = 0 ;
-		
+		int pro = 0;
+
 		String progress = "";
 
 		String progressBar = "";
@@ -148,37 +160,30 @@ public class ScoreboardHandler {
 				nextRank = r.getRank();
 				cost = EZRanksLite.fixMoney(Double.parseDouble(r.getCost()),
 						r.getCost());
-				pro = getProgress(plugin.getEco().getBalance(pl), cost);
-				
+				pro = getProgress(plugin.getEco().getBalance(pl), r.getCost());
+
 				if (pro == 100) {
-					progress = "/rankup";
-					progressBar = "/rankup";
+					progress = pro + "%";
+					progressBar = plugin.getSbOptions().getRankup();
+				} else {
+					progress = pro + "%";
+					progressBar = getProgressBar(pro, options.getpBarColor(), options.getpBarEndColor());
 				}
-				else {
-					progress = pro+"%";
-					progressBar = getProgressBar(pro);
-				}
-				
+
 			}
 		}
 
-		ScoreboardOptions options = plugin.getSbOptions();
-
-		if (options == null) {
-			options = plugin.loadSBOptions();
-		}
-		
 		String title = options.getTitle().replace("%player%", name)
-				.replace("%rankfrom%", rank)
-				.replace("%currentrank%", rank)
-				.replace("%rankto%", nextRank)
-				.replace("%rankup%", nextRank).replace("%cost%", cost)
-				.replace("%rankupcost%", cost)
+				.replace("%rankfrom%", rank).replace("%currentrank%", rank)
+				.replace("%rankto%", nextRank).replace("%rankup%", nextRank)
+				.replace("%cost%", cost).replace("%rankupcost%", cost)
 				.replace("%balance%", bal).replace("%bal%", bal)
 				.replace("%online%", online + "")
 				.replace("%progress%", progress)
 				.replace("%progressbar%", progressBar)
 				.replace("%votes%", votes);
+		title = plugin.getPlaceholders().getGlobalPlaceholders(title);
+		title = plugin.getPlaceholders().getPlayerPlaceholders(name, title);
 
 		EZScoreboard sb = new EZScoreboard(
 				ChatColor.translateAlternateColorCodes('&', title));
@@ -201,6 +206,10 @@ public class ScoreboardHandler {
 						.replace("%progress%", progress)
 						.replace("%progressbar%", progressBar)
 						.replace("%votes%", votes);
+
+				send = plugin.getPlaceholders().getGlobalPlaceholders(send);
+				send = plugin.getPlaceholders().getPlayerPlaceholders(name,
+						send);
 
 				sb.setLine(ChatColor.translateAlternateColorCodes('&', send));
 
