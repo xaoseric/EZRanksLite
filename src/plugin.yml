@@ -1,9 +1,9 @@
 name: EZRanksLite
 main: me.clip.ezrankslite.EZRanksLite
-version: 1.4
+version: 1.5.3.1
 author: extended_clip
 depend: [Vault]
-softdepend: [PermissionsEX, VoteParty]
+softdepend: [PermissionsEx, VoteParty, SQLPerms]
 description: Flexible lightweight economy based ranking system for your server permissions groups
 commands:
    rankup:

@@ -22,6 +22,7 @@ package me.clip.ezrankslite.scoreboard;
 import java.util.HashMap;
 
 import me.clip.ezrankslite.EZRanksLite;
+import me.clip.ezrankslite.multipliers.CostHandler;
 import me.clip.ezrankslite.rankdata.EZRankup;
 import me.clip.voteparty.VotePartyAPI;
 
@@ -66,6 +67,10 @@ public class ScoreboardHandler {
 	}
 
 	public void updateScoreboard(Player p) {
+		if (plugin.getSbOptions().getDisabledWorlds() != null && 
+				plugin.getSbOptions().getDisabledWorlds().contains(p.getLocation().getWorld().getName())) {
+			return;
+		}
 		if (hasScoreboard(p)) {
 			createScoreboard(p);
 		}
@@ -119,7 +124,7 @@ public class ScoreboardHandler {
 	}
 
 	public EZScoreboard createScoreboard(Player p) {
-
+		
 		ScoreboardOptions options = plugin.getSbOptions();
 
 		if (options == null) {
@@ -132,36 +137,55 @@ public class ScoreboardHandler {
 
 		String name = p.getName();
 
-		String rank = plugin.getVault().getMainGroup(p);
+		String rank = plugin.getHooks().getGroup(p);
 
-		String bal = EZRanksLite.fixMoney(plugin.getEco().getBalance(pl),
-				String.valueOf(plugin.getEco().getBalance(pl)));
+		String bal = EZRanksLite.fixMoney(plugin.getEco().getBalance(pl));
 
 		String nextRank = options.getNoRankups();
 
 		String cost = "0";
 
 		String votes = "";
+		String votesReceived = "";
+		String totalVotesNeeded = "";
 
 		int pro = 0;
 
 		String progress = "";
 
 		String progressBar = "";
+		
+		String rankupPrefix = "";
+		
+		String rankPrefix = "";
+		
+		String difference = "";
 
 		if (EZRanksLite.useVoteParty) {
 			votes = VotePartyAPI.getCurrentVoteCounter() + "";
+			votesReceived = VotePartyAPI.getVotes()+"";
+			totalVotesNeeded = VotePartyAPI.getTotalVotesNeeded()+"";
 		}
 
 		if (plugin.getRankHandler().hasRankData(rank)
 				&& plugin.getRankHandler().getRankData(rank).hasRankups()) {
+			rankPrefix = plugin.getRankHandler().getRankData(rank).getPrefix();
+			
 			for (EZRankup r : plugin.getRankHandler().getRankData(rank)
 					.getRankups()) {
+				
 				nextRank = r.getRank();
-				cost = EZRanksLite.fixMoney(Double.parseDouble(r.getCost()),
-						r.getCost());
-				pro = getProgress(plugin.getEco().getBalance(pl), r.getCost());
-
+				
+				double needed = Double.parseDouble(r.getCost());
+				
+				needed = CostHandler.getMultiplier(p, needed);
+				
+				needed = CostHandler.getDiscount(p, needed);
+				
+				cost = EZRanksLite.fixMoney(needed);
+				pro = getProgress(plugin.getEco().getBalance(pl), String.valueOf(needed));
+				rankupPrefix = r.getPrefix();
+				difference = EZRanksLite.getDifference(plugin.getEco().getBalance(pl), needed);
 				if (pro == 100) {
 					progress = pro + "%";
 					progressBar = plugin.getSbOptions().getRankup();
@@ -181,7 +205,13 @@ public class ScoreboardHandler {
 				.replace("%online%", online + "")
 				.replace("%progress%", progress)
 				.replace("%progressbar%", progressBar)
-				.replace("%votes%", votes);
+				.replace("%votes%", votes)
+				.replace("%votesreceived%", votesReceived)
+				.replace("%votesneeded%", totalVotesNeeded)
+				.replace("%rankprefix%", rankPrefix)
+				.replace("%rankupprefix%", rankupPrefix)
+				.replace("%difference%", difference)
+				.replace("%needed%", difference);
 		title = plugin.getPlaceholders().getGlobalPlaceholders(title);
 		title = plugin.getPlaceholders().getPlayerPlaceholders(name, title);
 
@@ -205,11 +235,16 @@ public class ScoreboardHandler {
 						.replace("%online%", online + "")
 						.replace("%progress%", progress)
 						.replace("%progressbar%", progressBar)
-						.replace("%votes%", votes);
+						.replace("%votes%", votes)
+						.replace("%votesreceived%", votesReceived)
+						.replace("%votesneeded%", totalVotesNeeded)
+						.replace("%rankprefix%", rankPrefix)
+						.replace("%rankupprefix%", rankupPrefix)
+						.replace("%difference%", difference)
+						.replace("%needed%", difference);
 
 				send = plugin.getPlaceholders().getGlobalPlaceholders(send);
-				send = plugin.getPlaceholders().getPlayerPlaceholders(name,
-						send);
+				send = plugin.getPlaceholders().getPlayerPlaceholders(name, send);
 
 				sb.setLine(ChatColor.translateAlternateColorCodes('&', send));
 

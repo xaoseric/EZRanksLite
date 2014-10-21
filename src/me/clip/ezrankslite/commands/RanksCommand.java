@@ -24,6 +24,7 @@ import java.util.TreeMap;
 
 import me.clip.ezrankslite.EZRanksLite;
 import me.clip.ezrankslite.Lang;
+import me.clip.ezrankslite.multipliers.CostHandler;
 import me.clip.ezrankslite.rankdata.EZRank;
 import me.clip.ezrankslite.rankdata.EZRankup;
 
@@ -70,7 +71,7 @@ public class RanksCommand implements CommandExecutor {
 		
 		
 		
-		String pRank = plugin.getVault().getMainGroup(p);
+		String pRank = plugin.getHooks().getGroup(p);
 
 		Map<Integer, EZRank> map = new TreeMap<Integer, EZRank>();
 		
@@ -108,13 +109,25 @@ public class RanksCommand implements CommandExecutor {
 					plugin.getLogger().warning("There was a problem with your rankups.yml!");
 					continue;
 				}
-				else if (pRank != null && pRank.equalsIgnoreCase(ezr.getRank())) {
+				
+				double cost = CostHandler.getMultiplier(p, Double.parseDouble(r.getCost()));
+				cost = CostHandler.getDiscount(p, cost);
+				
+				if (pRank != null && pRank.equalsIgnoreCase(ezr.getRank())) {
 				plugin.sms(p, plugin.getRanksYes().replace("%rankfrom%", ezr.getRank())
-						.replace("%rankto%", r.getRank()).replace("%cost%", EZRanksLite.fixMoney(Double.parseDouble(r.getCost()), r.getCost())));
+						.replace("%rankprefix%", ezr.getPrefix())
+						.replace("%rankupprefix%", r.getPrefix())
+						.replace("%rankto%", r.getRank())
+						.replace("%needed%", EZRanksLite.getDifference(plugin.getEco().getBalance(p), Double.parseDouble(r.getCost())))
+						.replace("%cost%", EZRanksLite.fixMoney(cost)));
 				}
 				else {
 					plugin.sms(p, plugin.getRanksNo().replace("%rankfrom%", ezr.getRank())
-							.replace("%rankto%", r.getRank()).replace("%cost%", EZRanksLite.fixMoney(Double.parseDouble(r.getCost()), r.getCost())));
+							.replace("%rankprefix%", ezr.getPrefix())
+							.replace("%rankupprefix%", r.getPrefix())
+							.replace("%rankto%", r.getRank())
+							.replace("%needed%", EZRanksLite.getDifference(plugin.getEco().getBalance(p), Double.parseDouble(r.getCost())))
+							.replace("%cost%", EZRanksLite.fixMoney(cost)));
 				}
 			}
 			}

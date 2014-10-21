@@ -24,15 +24,16 @@ import me.clip.ezrankslite.EZRanksLite;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
-public class JoinListener implements Listener {
+public class PlayerListener implements Listener {
 	
 	private EZRanksLite plugin;
 	
-	public JoinListener(EZRanksLite instance) {
+	public PlayerListener(EZRanksLite instance) {
 		plugin = instance;
 	}
 	
@@ -45,8 +46,31 @@ public class JoinListener implements Listener {
 		
 		Player p = e.getPlayer();
 		
+		if (plugin.getSbOptions().getDisabledWorlds() != null && 
+				plugin.getSbOptions().getDisabledWorlds().contains(p.getLocation().getWorld().getName())) {
+			return;
+		}
+		
 		plugin.getBoardhandler().createScoreboard(p);
 		
+	}
+	
+	@EventHandler
+	public void onWorldChange(PlayerChangedWorldEvent e) {
+		
+		if (!plugin.useScoreboard()) {
+			return;
+		}
+		
+		Player p = e.getPlayer();
+		
+		if (plugin.getSbOptions().getDisabledWorlds() != null && 
+				plugin.getSbOptions().getDisabledWorlds().contains(p.getLocation().getWorld().getName())) {
+			plugin.getBoardhandler().removeScoreboard(p);
+		}
+		else {
+			plugin.getBoardhandler().createScoreboard(p);
+		}
 		
 	}
 	

@@ -37,6 +37,8 @@ public class ScoreboardOptions {
 	private static String pBarColor;
 	
 	private static String pBarEndColor;
+	
+	private static List<String> disabledWorlds;
 
 	public String getTitle() {
 		return title;
@@ -84,6 +86,14 @@ public class ScoreboardOptions {
 
 	public void setpBarEndColor(String pBarEndColor) {
 		ScoreboardOptions.pBarEndColor = pBarEndColor;
+	}
+
+	public List<String> getDisabledWorlds() {
+		return disabledWorlds;
+	}
+
+	public void setDisabledWorlds(List<String> disabledWorlds) {
+		ScoreboardOptions.disabledWorlds = disabledWorlds;
 	}
 
 }

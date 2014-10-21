@@ -25,6 +25,7 @@ import java.util.List;
 
 import me.clip.ezrankslite.EZRanksLite;
 import me.clip.ezrankslite.Lang;
+import me.clip.ezrankslite.multipliers.CostHandler;
 import me.clip.ezrankslite.rankdata.EZRank;
 import me.clip.ezrankslite.rankdata.EZRankup;
 
@@ -43,15 +44,16 @@ public class RankupCommand implements CommandExecutor {
 		plugin = instance;
 	}
 
-	//reset confirmation list <playername>
+	// reset confirmation list <playername>
 	private static List<String> reset = new ArrayList<String>();
-	//rankup confirmation map <playername, rankname>
+	// rankup confirmation map <playername, rankname>
 	private static HashMap<String, String> wtc = new HashMap<String, String>();
-	
+
 	private static List<String> cooldown = new ArrayList<String>();
 
 	@Override
-	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+	public boolean onCommand(CommandSender sender, Command cmd, String label,
+			String[] args) {
 
 		if (!(sender instanceof Player)) {
 			sender.sendMessage("You need to be a player to rankup dummy!");
@@ -60,64 +62,130 @@ public class RankupCommand implements CommandExecutor {
 
 		Player p = (Player) sender;
 		OfflinePlayer pll = p;
-		
-		if (plugin.useRankupCooldown()) {
-			if (!p.hasPermission("ezadmin.cooldown.bypass")) {
-			if (cooldown.contains(p.getName())) {
-				plugin.sms(p, Lang.RANKUP_ON_COOLDOWN.getConfigValue(new String[] {plugin.getRankupCooldownTime()+""}));
-				return true;
-			}
-			}
-		}
-		
-		String rank = plugin.getVault().getMainGroup(p);
+
+		String rank = plugin.getHooks().getGroup(p);
 
 		if (!plugin.getRankHandler().hasRankData(rank)) {
-			plugin.sms(p, Lang.RANKUP_NO_RANKUPS_AVAILABLE.getConfigValue(new String[] {rank}));
+			plugin.sms(p, Lang.RANKUP_NO_RANKUPS_AVAILABLE
+					.getConfigValue(new String[] { rank }));
 			return true;
 		}
 
 		EZRank ezrank = plugin.getRankHandler().getRankData(rank);
 
-		if (ezrank == null || ezrank.hasRankups() == false) {
-			plugin.sms(p, Lang.RANKUP_NO_RANKUPS_AVAILABLE.getConfigValue(new String[] {rank}));
+		if (ezrank == null) {
+			plugin.sms(p, Lang.RANKUP_NO_RANKUPS_AVAILABLE
+					.getConfigValue(new String[] { rank }));
 			return true;
 		}
 
 		if (args.length == 0) {
+			
+			if (plugin.useRankupCooldown()) {
+				if (!p.hasPermission("ezadmin.cooldown.bypass")) {
+					if (cooldown.contains(p.getName())) {
+						plugin.sms(p, Lang.RANKUP_ON_COOLDOWN
+								.getConfigValue(new String[] { plugin
+										.getRankupCooldownTime() + "" }));
+						return true;
+					}
+				}
+			}
+			
+			if (ezrank.isLastRank()) {
+				plugin.sms(p, Lang.RANKUP_LAST_RANK
+						.getConfigValue(new String[] { rank }));
+				return true;
+			}
+			
+			
+			if (ezrank.hasRankups() == false) {
+				plugin.sms(p, Lang.RANKUP_NO_RANKUPS_AVAILABLE
+						.getConfigValue(new String[] { rank }));
+				return true;
+			}
 
 			if (ezrank.getRankups().size() == 1) {
 
 				EZRankup ru = ezrank.getRankups().iterator().next();
 
 				if (!ru.isActive()) {
-					plugin.sms(p, Lang.RANKUP_DISABLED.getConfigValue(new String[] {ru.getRank(), rank}));
+					plugin.sms(
+							p,
+							Lang.RANKUP_DISABLED.getConfigValue(new String[] {
+									ru.getRank(), rank, ezrank.getPrefix() }));
 					return true;
 				}
 
 				double balance = plugin.getEco().getBalance(pll);
+
 				double needed = Double.parseDouble(ru.getCost());
+
+				needed = CostHandler.getMultiplier(p, needed);
+
+				needed = CostHandler.getDiscount(p, needed);
+
 				if (balance < needed) {
 					for (String msg : ru.getRequirementMsg()) {
 						plugin.sms(
 								p,
 								msg.replace("%rankfrom%", ezrank.getRank())
 										.replace("%rankto%", ru.getRank())
+										.replace("%rankprefix%",
+												ezrank.getPrefix())
+										.replace("%rankupprefix%",
+												ru.getPrefix())
 										.replace("%player%", p.getName())
+										.replace(
+												"%progress%",
+												plugin.getBoardhandler()
+														.getProgress(
+																balance,
+																String.valueOf(needed))
+														+ "")
+										.replace(
+												"%progressbar%",
+												plugin.getBoardhandler()
+														.getProgressBar(
+																plugin.getBoardhandler()
+																		.getProgress(
+																				balance,
+																				String.valueOf(needed)),
+																plugin.getSbOptions()
+																		.getpBarColor(),
+																plugin.getSbOptions()
+																		.getpBarEndColor()))
+										.replace(
+												"%difference%",
+												EZRanksLite.getDifference(
+														balance, needed))
+										.replace(
+												"%costdifference%",
+												EZRanksLite.getDifference(
+														balance, needed))
 										.replace("%world%",
 												p.getWorld().getName())
-										.replace("%balance%", EZRanksLite.fixMoney(balance, String.valueOf(balance)))
-										.replace("%cost%", EZRanksLite.fixMoney(needed, ru.getCost())));
+										.replace(
+												"%balance%",
+												EZRanksLite
+														.fixMoney(
+																balance))
+										.replace(
+												"%cost%",
+												EZRanksLite.fixMoney(needed)));
 					}
 					return true;
 				}
 
 				if (ru.isConfirmToRank()) {
-					
-					
+
 					if (wtc.containsKey(p.getName()) == false) {
 						wtc.put(p.getName(), ru.getRank());
-						plugin.sms(p, Lang.RANKUP_CONFIRMATION.getConfigValue(new String[] {ru.getRank(), EZRanksLite.fixMoney(needed, ru.getCost())}));
+						plugin.sms(p, Lang.RANKUP_CONFIRMATION
+								.getConfigValue(new String[] {
+										ru.getRank(),
+										EZRanksLite.fixMoney(needed),
+										ru.getPrefix() }));
 
 						final String plname = p.getName();
 						Bukkit.getScheduler().scheduleSyncDelayedTask(
@@ -134,61 +202,63 @@ public class RankupCommand implements CommandExecutor {
 					String confirmRU = wtc.get(p.getName());
 
 					if (!confirmRU.equals(ru.getRank())) {
-						plugin.sms(p,
-								Lang.RANKUP_CONFIRMATION_INCORRECT_RANKUP.getConfigValue(new String[] {
-										confirmRU, ru.getRank()
-								}));
+						plugin.sms(p, Lang.RANKUP_CONFIRMATION_INCORRECT_RANKUP
+								.getConfigValue(new String[] { confirmRU,
+										ru.getRank(), ru.getPrefix() }));
 						return true;
 					}
 
 					wtc.remove(p.getName());
 				}
 
-				if (plugin.getPlayerhandler().rankupPlayer(p,
-						ezrank, ru)) {
-					if (plugin.useRankupCooldown()) {
-						if (!p.hasPermission("ezadmin.cooldown.bypass")) {
+				plugin.getPlayerhandler().rankupPlayer(p, ezrank, ru, needed);
+
+				if (plugin.useRankupCooldown()) {
+
+					if (!p.hasPermission("ezadmin.cooldown.bypass")) {
+
 						cooldown.add(p.getName());
 						final String plname = p.getName();
 						final int time = plugin.getRankupCooldownTime();
-						Bukkit.getScheduler().scheduleSyncDelayedTask(this.plugin,
-								new Runnable() {
+						Bukkit.getScheduler().scheduleSyncDelayedTask(
+								this.plugin, new Runnable() {
 									public void run() {
 										if (cooldown.contains(plname)) {
 											cooldown.remove(plname);
 										}
 									}
 								}, (20 * time));
-						
-						}
-						}
-					plugin.debug(false, p.getName() + " ranked up from "
-							+ ezrank.getRank() + " to " + ru.getRank());
-				} else {
-					plugin.debug(false,
-							p.getName()
-									+ " attempted but failed a rankup from "
-									+ ezrank.getRank() + " to " + ru.getRank());
+
+					}
 				}
 
+				plugin.debug(false,
+						p.getName() + " ranked up from " + ezrank.getRank()
+								+ " to " + ru.getRank());
+
 			} else {
-				plugin.sms(p,
-						Lang.RANKUP_MULTIPLE_RANKUPS.getConfigValue(new String[] {
-								ezrank.getRankups().size()+"", rank
-						}));
+				plugin.sms(p, Lang.RANKUP_MULTIPLE_RANKUPS
+						.getConfigValue(new String[] {
+								ezrank.getRankups().size() + "", rank }));
 				for (EZRankup ru : ezrank.getRankups()) {
-					plugin.sms(p,
-							Lang.RANKUP_MULTIPLE_RANKUPS_LIST.getConfigValue(new String[] {
-									ru.getRank(), EZRanksLite.fixMoney(Double.parseDouble(ru.getCost()), ru.getCost())
-							}));
+					double needed = Double.parseDouble(ru.getCost());
+
+					needed = CostHandler.getMultiplier(p, needed);
+
+					needed = CostHandler.getDiscount(p, needed);
+					plugin.sms(p, Lang.RANKUP_MULTIPLE_RANKUPS_LIST
+							.getConfigValue(new String[] {
+									ru.getRank(),
+									EZRanksLite.fixMoney(needed),
+									ru.getPrefix() }));
 				}
 			}
 			return true;
 		} else if (args.length > 0) {
 			if (args[0].equalsIgnoreCase("help")) {
-				plugin.sms(p, Lang.HELP_HEADER.getConfigValue(new String[] {
-						plugin.getServername()
-				}));
+				plugin.sms(p,
+						Lang.HELP_HEADER.getConfigValue(new String[] { plugin
+								.getServername() }));
 				plugin.sms(p, Lang.HELP_RANKUP.getConfigValue(null));
 				if (plugin.useRanksCommand()) {
 					plugin.sms(p, Lang.HELP_RANKS.getConfigValue(null));
@@ -197,38 +267,54 @@ public class RankupCommand implements CommandExecutor {
 					plugin.sms(p, Lang.HELP_RANK_RESET.getConfigValue(null));
 				}
 				if (plugin.useScoreboard()) {
-					plugin.sms(p, Lang.HELP_SCOREBOARD_TOGGLE.getConfigValue(null));
-					plugin.sms(p, Lang.HELP_SCOREBOARD_REFRESH.getConfigValue(null));
+					plugin.sms(p,
+							Lang.HELP_SCOREBOARD_TOGGLE.getConfigValue(null));
+					plugin.sms(p,
+							Lang.HELP_SCOREBOARD_REFRESH.getConfigValue(null));
 				}
 				return true;
 			}
 			if (args[0].equalsIgnoreCase("reset")) {
+				
 				if (!ezrank.allowReset()) {
 					plugin.sms(p, Lang.RESET_NOT_ALLOWED.getConfigValue(null));
 					return true;
+				}
+				
+				if (plugin.useRankupCooldown()) {
+					if (!p.hasPermission("ezadmin.cooldown.bypass")) {
+						if (cooldown.contains(p.getName())) {
+							plugin.sms(p, Lang.RANKUP_ON_COOLDOWN
+									.getConfigValue(new String[] { plugin
+											.getRankupCooldownTime() + "" }));
+							return true;
+						}
+					}
 				}
 
 				double needed = Double.parseDouble(ezrank.getResetCost());
 				double has = plugin.getEco().getBalance(pll);
 				if (has < needed) {
-					plugin.sms(p, Lang.RESET_NOT_ENOUGH_MONEY.getConfigValue(new String[] {
-							EZRanksLite.fixMoney(needed, ezrank.getResetCost()),
-							EZRanksLite.fixMoney(has, has+"")
-					}));
+					plugin.sms(p, Lang.RESET_NOT_ENOUGH_MONEY
+							.getConfigValue(new String[] {
+									EZRanksLite.fixMoney(needed),
+									EZRanksLite.fixMoney(has),
+									ezrank.getRank(), ezrank.getPrefix() }));
 					return true;
 				}
 
 				if (!reset.contains(p.getName())) {
 					reset.add(p.getName());
 					if (needed == 0) {
-						plugin.sms(p,
-								Lang.RESET_CONFIRMATION_FREE.getConfigValue(null));
+						plugin.sms(p, Lang.RESET_CONFIRMATION_FREE
+								.getConfigValue(new String[] {
+										ezrank.getRank(), ezrank.getPrefix() }));
 
 					} else {
-						plugin.sms(p,
-								Lang.RESET_CONFIRMATION_COST.getConfigValue(new String[] {
-										EZRanksLite.fixMoney(needed, ezrank.getResetCost())
-								}));
+						plugin.sms(p, Lang.RESET_CONFIRMATION_COST
+								.getConfigValue(new String[] {
+										EZRanksLite.fixMoney(needed),
+										ezrank.getRank(), ezrank.getPrefix() }));
 					}
 
 					final String plname = p.getName();
@@ -245,28 +331,29 @@ public class RankupCommand implements CommandExecutor {
 
 				reset.remove(p.getName());
 
-				if (plugin.getPlayerhandler().resetPlayer(p,
-						ezrank)) {
+				if (plugin.getPlayerhandler().resetPlayer(p, ezrank)) {
 					if (plugin.useRankupCooldown()) {
 						if (!p.hasPermission("ezadmin.cooldown.bypass")) {
-						cooldown.add(p.getName());
-						plugin.debug(false,
-								p.getName() + " added to rankup cooldown");
-						final String plname = p.getName();
-						final int time = plugin.getRankupCooldownTime();
-						Bukkit.getScheduler().scheduleSyncDelayedTask(this.plugin,
-								new Runnable() {
-									public void run() {
-										if (cooldown.contains(plname)) {
-											cooldown.remove(plname);
-											plugin.debug(false,
-													plname + " removed from rankup cooldown");
+							cooldown.add(p.getName());
+							plugin.debug(false, p.getName()
+									+ " added to rankup cooldown");
+							final String plname = p.getName();
+							final int time = plugin.getRankupCooldownTime();
+							Bukkit.getScheduler().scheduleSyncDelayedTask(
+									this.plugin, new Runnable() {
+										public void run() {
+											if (cooldown.contains(plname)) {
+												cooldown.remove(plname);
+												plugin.debug(
+														false,
+														plname
+																+ " removed from rankup cooldown");
+											}
 										}
-									}
-								}, (20 * time));
-						
+									}, (20 * time));
+
 						}
-						}
+					}
 					plugin.debug(false, p.getName() + " reset their rank from "
 							+ ezrank.getRank());
 				} else {
@@ -277,8 +364,31 @@ public class RankupCommand implements CommandExecutor {
 
 				return true;
 			}
+			
+			if (plugin.useRankupCooldown()) {
+				if (!p.hasPermission("ezadmin.cooldown.bypass")) {
+					if (cooldown.contains(p.getName())) {
+						plugin.sms(p, Lang.RANKUP_ON_COOLDOWN
+								.getConfigValue(new String[] { plugin
+										.getRankupCooldownTime() + "" }));
+						return true;
+					}
+				}
+			}
+			
+			if (ezrank.isLastRank()) {
+				plugin.sms(p, Lang.RANKUP_LAST_RANK
+						.getConfigValue(new String[] { rank }));
+				return true;
+			}
+			
+			if (ezrank.hasRankups() == false) {
+				plugin.sms(p, Lang.RANKUP_NO_RANKUPS_AVAILABLE
+						.getConfigValue(new String[] { rank }));
+				return true;
+			}
 
-			//rankup <rank>
+			// rankup <rank>
 			String rankto = args[0];
 
 			EZRankup rankup = null;
@@ -291,29 +401,73 @@ public class RankupCommand implements CommandExecutor {
 			}
 
 			if (rankup == null) {
-				plugin.sms(p, Lang.RANKUP_INCORRECT_RANK_ARGUMENT.getConfigValue(new String[] {
-						rankto
-				}));
+				plugin.sms(p, Lang.RANKUP_INCORRECT_RANK_ARGUMENT
+						.getConfigValue(new String[] { rankto,
+								ezrank.getRank(), ezrank.getPrefix()
+
+						}));
 				return true;
 			}
 			if (!rankup.isActive()) {
-				plugin.sms(p, Lang.RANKUP_DISABLED.getConfigValue(new String[] {rankup.getRank(), rank}));
+				plugin.sms(
+						p,
+						Lang.RANKUP_DISABLED.getConfigValue(new String[] {
+								rankup.getRank(), rank, rankup.getPrefix(),
+								ezrank.getPrefix() }));
 				return true;
 			}
 
 			double balance = plugin.getEco().getBalance(pll);
 			double needed = Double.parseDouble(rankup.getCost());
-			
+
+			needed = CostHandler.getMultiplier(p, needed);
+
+			needed = CostHandler.getDiscount(p, needed);
+
 			if (balance < needed) {
 				for (String msg : rankup.getRequirementMsg()) {
 					plugin.sms(
 							p,
 							msg.replace("%rankfrom%", ezrank.getRank())
 									.replace("%rankto%", rankup.getRank())
+									.replace("%rankprefix%", ezrank.getPrefix())
+									.replace("%rankupprefix%",
+											rankup.getPrefix())
 									.replace("%player%", p.getName())
+									.replace(
+											"%progress%",
+											plugin.getBoardhandler()
+													.getProgress(
+															balance,
+															String.valueOf(needed))
+													+ "")
+									.replace(
+											"%progressbar%",
+											plugin.getBoardhandler()
+													.getProgressBar(
+															plugin.getBoardhandler()
+																	.getProgress(
+																			balance,
+																			String.valueOf(needed)),
+															plugin.getSbOptions()
+																	.getpBarColor(),
+															plugin.getSbOptions()
+																	.getpBarEndColor()))
+									.replace(
+											"%difference%",
+											EZRanksLite.getDifference(balance,
+													needed))
+									.replace(
+											"%costdifference%",
+											EZRanksLite.getDifference(balance,
+													needed))
 									.replace("%world%", p.getWorld().getName())
-									.replace("%balance%", EZRanksLite.fixMoney(balance, String.valueOf(balance)))
-									.replace("%cost%", EZRanksLite.fixMoney(needed, rankup.getCost())));
+									.replace(
+											"%balance%",
+											EZRanksLite.fixMoney(balance))
+									.replace(
+											"%cost%",
+											EZRanksLite.fixMoney(needed)));
 				}
 				return true;
 			}
@@ -322,7 +476,12 @@ public class RankupCommand implements CommandExecutor {
 				if (wtc.containsKey(p.getName()) == false) {
 					wtc.put(p.getName(), rankup.getRank());
 
-					plugin.sms(p, Lang.RANKUP_CONFIRMATION_MULTIPLE_RANKUPS.getConfigValue(new String[] {rankup.getRank(), EZRanksLite.fixMoney(needed, rankup.getCost())}));
+					plugin.sms(p, Lang.RANKUP_CONFIRMATION_MULTIPLE_RANKUPS
+							.getConfigValue(new String[] {
+									rankup.getRank(),
+									EZRanksLite.fixMoney(needed),
+									ezrank.getRank(), ezrank.getPrefix(),
+									rankup.getPrefix() }));
 
 					final String plname = p.getName();
 					Bukkit.getScheduler().scheduleSyncDelayedTask(this.plugin,
@@ -339,52 +498,45 @@ public class RankupCommand implements CommandExecutor {
 				String confirmRU = wtc.get(p.getName());
 
 				if (!confirmRU.equals(rankup.getRank())) {
-					plugin.sms(p,
-							Lang.RANKUP_CONFIRMATION_INCORRECT_RANKUP.getConfigValue(new String[] {
-									confirmRU, rankup.getRank()
-							}));
+					plugin.sms(p, Lang.RANKUP_CONFIRMATION_INCORRECT_RANKUP
+							.getConfigValue(new String[] { confirmRU,
+									rankup.getRank(), ezrank.getRank(),
+									ezrank.getPrefix(), rankup.getPrefix() }));
 					return true;
 				}
 
 				wtc.remove(p.getName());
 			}
 
-		
+			plugin.getPlayerhandler().rankupPlayer(p, ezrank, rankup, needed);
 
-			if (plugin.getPlayerhandler().rankupPlayer(p, ezrank,
-					rankup)) {
-				plugin.debug(false,
-						p.getName() + " ranked up from " + ezrank.getRank()
-								+ " to " + rankup.getRank());
-				if (plugin.useRankupCooldown()) {
-					
-					if (!p.hasPermission("ezadmin.cooldown.bypass")) {
-					
+			plugin.debug(false,
+					p.getName() + " ranked up from " + ezrank.getRank()
+							+ " to " + rankup.getRank());
+
+			if (plugin.useRankupCooldown()) {
+
+				if (!p.hasPermission("ezadmin.cooldown.bypass")) {
+
 					cooldown.add(p.getName());
-					plugin.debug(false,
-							p.getName() + " added to rankup cooldown");
+					
+					plugin.debug(false, p.getName()+" added to rankup cooldown");
+					
 					final String plname = p.getName();
 					final int time = plugin.getRankupCooldownTime();
+					
 					Bukkit.getScheduler().scheduleSyncDelayedTask(this.plugin,
-							new Runnable() {
-								public void run() {
-									if (cooldown.contains(plname)) {
-										cooldown.remove(plname);
-										plugin.debug(false,
-												plname + " removed from rankup cooldown");
-									}
+						new Runnable() {
+							public void run() {
+								if (cooldown.contains(plname)) {
+									cooldown.remove(plname);
+									plugin.debug(false, plname+" removed from rankup cooldown");
 								}
-							}, (20 * time));
-					
-					
-					}
+							}
+						}, (20 * time));
+
 				}
-				
-			} else {
-				plugin.debug(false,
-						p.getName() + " attempted but failed a rankup from "
-								+ ezrank.getRank() + " to " + rankup.getRank());
-			}		
+			}
 
 		}
 		return true;

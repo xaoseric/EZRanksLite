@@ -73,6 +73,8 @@ public class EZAdminCommand implements CommandExecutor {
 					+ plugin.getDescription().getVersion() + " &eHelp");
 			plugin.sms(p, "&a/ezadmin createrankup <rankfrom> <rankto> <cost>");
 			plugin.sms(p, "&fCreate a new rankup");
+			plugin.sms(p, "&a/ezadmin setlastrank <rank> <boolean>");
+			plugin.sms(p, "&fSet if a rank is the last rank players can rankup to");
 			plugin.sms(p, "&a/ezadmin deleterankup <rankfrom> <rankto>");
 			plugin.sms(p, "&fDelete a rankup");
 			plugin.sms(p, "&a/ezadmin list");
@@ -97,6 +99,56 @@ public class EZAdminCommand implements CommandExecutor {
 			plugin.sms(p, "&a/sbrefresh <player>");
 			plugin.sms(p, "&frefresh a players scoreboard");
 			return true;
+		}
+		
+		else if (args[0].equalsIgnoreCase("setlastrank")
+				|| args[0].equalsIgnoreCase("slr")) {
+			
+			if (!p.hasPermission("ezranks.admin.create")) {
+				plugin.sms(p, "&cYou don't have permission to do this!!");
+				return true;
+			}
+
+			if (args.length != 3) {
+				plugin.sms(p, "&cIncorrect usage!");
+				plugin.sms(p, "&bType &f/ezadmin help &bfor help");
+				return true;
+			}
+
+			String rank = args[1];
+			
+			if (!isB(args[2].toUpperCase())) {
+				plugin.sms(p, "&cIncorrect usage!");
+				plugin.sms(p, "&bType &f/ezadmin help &bfor help");
+				return true;
+			}
+			
+			// if the groups are valid check if a rankup already exists
+			if (plugin.getHooks().isValidServerGroup(rank)) {
+				
+				boolean is = Boolean.valueOf(args[2]);
+				
+				plugin.getRankFile().setLastRank(rank, is);
+				plugin.getRankFile().reload();
+				plugin.getRankFile().save();
+				String loaded = plugin.getRankFile().loadRankupsFromFile();
+				plugin.sms(p, loaded);
+				if (is) {
+				plugin.sms(p, rank+" &awill now be recognized as a last rank!");
+				}
+				else {
+					plugin.sms(p, rank+" &awill not be recognized as a last rank!");
+				}
+				return true;
+			} else {
+
+				plugin.sms(p, "&4Last rank creation failed!");
+				plugin.sms(p, "&f" + rank + "&b is not a valid server group");
+				
+				return true;
+
+			}
+
 		}
 
 		else if (args[0].equalsIgnoreCase("createrankup")
@@ -125,8 +177,8 @@ public class EZAdminCommand implements CommandExecutor {
 			String cost = args[3];
 
 			// if the groups are valid check if a rankup already exists
-			if (plugin.getVault().isValidServerGroup(rankFrom)
-					&& plugin.getVault().isValidServerGroup(rankTo)) {
+			if (plugin.getHooks().isValidServerGroup(rankFrom)
+					&& plugin.getHooks().isValidServerGroup(rankTo)) {
 
 				boolean isRankup = false;
 
@@ -166,11 +218,11 @@ public class EZAdminCommand implements CommandExecutor {
 			} else {
 
 				plugin.sms(p, "&4Rankup creation failed!");
-				if (plugin.getVault().isValidServerGroup(rankFrom) == false) {
+				if (plugin.getHooks().isValidServerGroup(rankFrom) == false) {
 					plugin.sms(p, "&f" + rankFrom
 							+ "&b is not a valid server group");
 				}
-				if (plugin.getVault().isValidServerGroup(rankTo) == false) {
+				if (plugin.getHooks().isValidServerGroup(rankTo) == false) {
 					plugin.sms(p, "&f" + rankTo
 							+ "&b is not a valid server group");
 				}
@@ -274,11 +326,16 @@ public class EZAdminCommand implements CommandExecutor {
 
 			plugin.getRankFile().reload();
 			plugin.getRankFile().save();
+			
+			plugin.getMultiplierConfig().reload();
+			plugin.getMultiplierConfig().save();
 			plugin.reloadConfig();
 			plugin.saveConfig();
 			plugin.loadOptions();
 			String loaded = plugin.getRankFile().loadRankupsFromFile();
 			plugin.sms(p, "&bYou have successfully reloaded EZRanks!");
+			plugin.sms(p, "&f" + plugin.getMultiplierConfig().loadMultipliers()+" &bmultipliers loaded!");
+			plugin.sms(p, "&f" + plugin.getMultiplierConfig().loadDiscounts()+" &bdiscounts loaded!");
 			plugin.sms(p, "&f" + loaded);
 
 			if (plugin.useScoreboard()) {
@@ -782,6 +839,14 @@ public class EZAdminCommand implements CommandExecutor {
 		}
 
 		return true;
+	}
+	private boolean isB(String s) {
+		try {
+			Boolean.parseBoolean(s);
+			return true;
+		} catch (Exception e) {
+			return false;
+		}
 	}
 
 }

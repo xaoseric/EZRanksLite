@@ -37,6 +37,10 @@ public class EZRank {
 	
 	private int rankOrder;
 	
+	private String prefix;
+	
+	private boolean lastRank;
+	
 	public EZRank(String rankName) {
 		setRank(rankName);
 	}
@@ -125,6 +129,22 @@ public class EZRank {
 
 	public void setRankOrder(int rankOrder) {
 		this.rankOrder = rankOrder;
+	}
+
+	public String getPrefix() {
+		return prefix;
+	}
+
+	public void setPrefix(String prefix) {
+		this.prefix = prefix;
+	}
+
+	public boolean isLastRank() {
+		return lastRank;
+	}
+
+	public void setIsLastRank(boolean lastRank) {
+		this.lastRank = lastRank;
 	}
 
 }

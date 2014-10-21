@@ -52,17 +52,23 @@ public class ScoreboardToggleCommand implements CommandExecutor {
 				Player target = Bukkit.getServer().getPlayer(args[0]);
 				
 				if (target == null) {
-					plugin.sms(sender, args[0] + " &cis not online!");
+					plugin.sms(sender, Lang.PLAYER_NOT_ONLINE.getConfigValue(new String[] {
+							args[0]
+					}));
 					return true;
 				}
 				
 				if (plugin.getBoardhandler().hasScoreboard(target)) {
 					plugin.getBoardhandler().removeScoreboard(target);
-					plugin.sms(sender, "&f" + target.getName() + "s &bscoreboard has been toggled &coff&b.");
+					plugin.sms(sender, Lang.SCOREBOARD_TOGGLE_OFF_OTHERS.getConfigValue(new String[] {
+							target.getName()
+					}));
 				}
 				else {
 					plugin.getBoardhandler().createScoreboard(target);
-					plugin.sms(sender, "&f" + target.getName() + "s &bscoreboard has been toggled &aon&b.");
+					plugin.sms(sender, Lang.SCOREBOARD_TOGGLE_ON_OTHERS.getConfigValue(new String[] {
+							target.getName()
+					}));
 				}
 				
 				
@@ -79,19 +85,17 @@ public class ScoreboardToggleCommand implements CommandExecutor {
 		if (args.length == 0) {
 		if (plugin.getBoardhandler().hasScoreboard(p)) {
 			plugin.getBoardhandler().removeScoreboard(p);
-			plugin.sms(sender, "&bYour scoreboard has been toggled &coff&b.");
-			plugin.sms(sender, "&bEnable it with &f/sbtoggle&b.");
+			plugin.sms(sender, Lang.SCOREBOARD_TOGGLE_OFF_SELF.getConfigValue(null));
 		}
 		else {
 			plugin.getBoardhandler().createScoreboard(p);
-			plugin.sms(sender, "&bYour scoreboard has been toggled &aon&b.");
-			plugin.sms(sender, "&bDisable it with &f/sbtoggle&b.");
+			plugin.sms(sender, Lang.SCOREBOARD_TOGGLE_ON_SELF.getConfigValue(null));
 		}
 		}
 		else if (args.length > 0) {
 			
 			if (!p.hasPermission("ezranks.admin.scoreboard")) {
-				plugin.sms(sender, "&cYou don't have permission to do that!");
+				plugin.sms(sender, Lang.NO_PERMISSION.getConfigValue(null));
 				return true;
 			}
 			
@@ -99,21 +103,25 @@ public class ScoreboardToggleCommand implements CommandExecutor {
 			Player target = Bukkit.getServer().getPlayer(args[0]);
 			
 			if (target == null) {
-				plugin.sms(sender, args[0] + " &cis not online!");
+				plugin.sms(sender, Lang.PLAYER_NOT_ONLINE.getConfigValue(new String[] {
+						args[0]
+				}));
 				return true;
 			}
 			
 			if (plugin.getBoardhandler().hasScoreboard(target)) {
 				plugin.getBoardhandler().removeScoreboard(target);
-				plugin.sms(target, "&bYour scoreboard has been toggled &coff&b by &f" + p.getName() + "&b.");
-				plugin.sms(target, "&bEnable it with &f/sbtoggle&b.");
-				plugin.sms(sender, "&f" + target.getName() + "s &bscoreboard has been toggled &coff&b.");
+				plugin.sms(target, Lang.SCOREBOARD_TOGGLE_OFF_SELF.getConfigValue(null));
+				plugin.sms(sender, Lang.SCOREBOARD_TOGGLE_OFF_OTHERS.getConfigValue(new String[] {
+						target.getName()
+				}));
 			}
 			else {
 				plugin.getBoardhandler().createScoreboard(target);
-				plugin.sms(target, "&bYour scoreboard has been toggled &aon&b by &f" + p.getName() + "&b.");
-				plugin.sms(target, "&bDisable it with &f/sbtoggle&b.");
-				plugin.sms(sender, "&f" + target.getName() + "s &bscoreboard has been toggled &aon&b.");
+				plugin.sms(target, Lang.SCOREBOARD_TOGGLE_ON_SELF.getConfigValue(null));
+				plugin.sms(sender, Lang.SCOREBOARD_TOGGLE_OFF_OTHERS.getConfigValue(new String[] {
+						target.getName()
+				}));
 			}
 			
 			

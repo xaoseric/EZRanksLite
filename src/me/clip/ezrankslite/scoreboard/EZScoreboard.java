@@ -72,8 +72,6 @@ public class EZScoreboard {
 		scores.put(text, score);
 	}
 
-
-
 	public void reset() {
 		title = null;
 		scores.clear();
@@ -94,28 +92,23 @@ public class EZScoreboard {
 		return text;
 	}
 
-/*	private Map.Entry<Team, String> createTeam(String text) {
+	private Map.Entry<Team, String> createTeam(String text) {
 		String result = "";
-		if (text.length() <= 16) {
+		if (text.length() <= 16)
 			return new AbstractMap.SimpleEntry<>(null, text);
-		}
-			
 		Team team = scoreboard.registerNewTeam("text-"
 				+ scoreboard.getTeams().size());
 		Iterator<String> iterator = Splitter.fixedLength(16).split(text)
 				.iterator();
 		team.setPrefix(iterator.next());
-		
 		result = iterator.next();
-		
-		if (text.length() > 32) {
+		if (text.length() > 32)
 			team.setSuffix(iterator.next());
-			}
-		
 		teams.add(team);
 		return new AbstractMap.SimpleEntry<>(team, result);
 	}
-	
+
+	@SuppressWarnings("deprecation")
 	public void build() {
 		Objective obj = scoreboard
 				.registerNewObjective(
@@ -129,43 +122,12 @@ public class EZScoreboard {
 		for (Map.Entry<String, Integer> text : scores.entrySet()) {
 			Map.Entry<Team, String> team = createTeam(text.getKey());
 			Integer score = text.getValue() != null ? text.getValue() : index;
-			String p = team.getValue();
-			obj.getScore(p).setScore(score);
+			OfflinePlayer player = new EZOfflinePlayer(team.getValue());
+			if (team.getKey() != null)
+				team.getKey().addPlayer(player);
+			obj.getScore(player).setScore(score);
 			index -= 1;
 		}
-	}*/
-	
-    private Map.Entry<Team, String> createTeam(String text) {
-        String result = "";
-        if (text.length() <= 16)
-                return new AbstractMap.SimpleEntry<>(null, text);
-        Team team = scoreboard.registerNewTeam("text-" + scoreboard.getTeams().size());
-        Iterator<String> iterator = Splitter.fixedLength(16).split(text).iterator();
-        team.setPrefix(iterator.next());
-        result = iterator.next();
-        if (text.length() > 32)
-                team.setSuffix(iterator.next());
-        teams.add(team);
-        return new AbstractMap.SimpleEntry<>(team, result);
-}
-
-    @SuppressWarnings("deprecation")
-	public void build() {
-        Objective obj = scoreboard.registerNewObjective((title.length() > 16 ? title.substring(0, 15) : title), "dummy");
-        obj.setDisplayName(title);
-        obj.setDisplaySlot(DisplaySlot.SIDEBAR);
-
-        int index = scores.size();
-
-        for (Map.Entry<String, Integer> text : scores.entrySet()) {
-                Map.Entry<Team, String> team = createTeam(text.getKey());
-                Integer score = text.getValue() != null ? text.getValue() : index;
-                OfflinePlayer player = new EZOfflinePlayer(team.getValue());
-                if (team.getKey() != null)
-                        team.getKey().addPlayer(player);
-                obj.getScore(player).setScore(score);
-                index -= 1;
-        }
-}
+	}
 
 }

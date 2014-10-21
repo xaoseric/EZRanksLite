@@ -34,6 +34,23 @@ public class EZAPI {
 		plugin = instance;
 	}
 	
+	public String getFormattedBalance(Player p) {
+		double bal = getEconBalance(p);
+		return EZRanksLite.fixMoney(bal);
+	}
+	
+	public double getEconBalance(Player p) {
+		return plugin.getEco().getBalance(p);
+	}
+	
+	public String[] getPermissionsGroups(Player p) {
+		return plugin.getHooks().getGroups(p);
+	}
+	
+	public String[] getServerGroups() {
+		return plugin.getHooks().getServerGroups();
+	}
+	
 	/**
 	 * set a custom placeholder for a specific player in the EZRanksLite scoreboard.
 	 * if a custom placeholder is used for a specific player, it must be set for every player if the
@@ -47,6 +64,12 @@ public class EZAPI {
 	public void setPlayerPlaceholder(String playername, String identifier, String value) {
 		plugin.getPlaceholders().setPlayerPlaceholder(playername, identifier, value);
 	}
+	
+	@Deprecated
+	public void setCustomPlaceholder(String playername, String identifier, String value) {
+		plugin.getPlaceholders().setPlayerPlaceholder(playername, identifier, value);
+	}
+	
 	
 	/**
 	 * set a custom placeholder for a specific player in the EZRanksLite scoreboard.
@@ -79,7 +102,7 @@ public class EZAPI {
 	 * @return current permissions group of a player
 	 */
 	public String getCurrentRank(Player p) {
-		return plugin.getVault().getMainGroup(p);
+		return plugin.getHooks().getGroup(p);
 	}
 
 	/**

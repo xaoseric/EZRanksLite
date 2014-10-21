@@ -29,6 +29,7 @@ public class EZRankup {
 	private String cost;
 	private List<String> requirementMsg;
 	private List<String> commands;
+	private String prefix;
 	
 	public EZRankup(String rank) {
 		setRank(rank);
@@ -80,6 +81,14 @@ public class EZRankup {
 
 	public void setConfirmToRank(boolean confirmToRank) {
 		this.confirmToRank = confirmToRank;
+	}
+
+	public String getPrefix() {
+		return prefix;
+	}
+
+	public void setPrefix(String prefix) {
+		this.prefix = prefix;
 	}
 	
 

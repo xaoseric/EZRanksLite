@@ -68,6 +68,10 @@ public enum Lang {
 	 */
 	RANKUP_MULTIPLE_RANKUPS_LIST("rankup_multiple_rankups_list", "&b/rankup {0}  &aCost: &f{1}"),
 	/**
+	 * Rankup at last rank
+	 */
+	RANKUP_LAST_RANK("rankup_last_rank", "&cYou are at the last rank and have no rankups!"),
+	/**
 	 * Rankup incorrect rank argument
 	 */
 	RANKUP_INCORRECT_RANK_ARGUMENT("rankup_incorrect_rankname_argument", "&f{0} &cis not a valid rankup name! type /rankup!"),
@@ -88,33 +92,69 @@ public enum Lang {
 	 */
 	HELP_RANK_RESET("help_rank_reset", "&b/rankup reset &7- &freset your rank"),
 	/**
-	 * Help rank reset
+	 * Help sb toggle
 	 */
 	HELP_SCOREBOARD_TOGGLE("help_scoreboard_toggle", "&b/sbtoggle &7- &ftoggle scoreboard on/off"),
 	/**
-	 * Help rank reset
+	 * Help sb refresh
 	 */
 	HELP_SCOREBOARD_REFRESH("help_scoreboard_refresh", "&b/sbrefresh &7- &frefresh scoreboard stats"),
 	/**
-	 * Help rank reset
+	 * reset not allowed
 	 */
 	RESET_NOT_ALLOWED("reset_not_allowed", "&cYou are not allowed to use &7/rankup reset &cat your current rank!"),
 	/**
-	 * Help rank reset
+	 * reset not enough money
 	 */
 	RESET_NOT_ENOUGH_MONEY("reset_not_enough_money", "&cYou need &a$&f{0} &cto reset your rank! You only have &a$&f{1}&c!"),
 	/**
-	 * Help rank reset
+	 * reset confirmation free
 	 */
 	RESET_CONFIRMATION_FREE("reset_confirmation_free", "&bAre you sure you want to reset your rank? Use &7/rankup reset &bagain to confirm!"),
 	/**
-	 * Help rank reset
+	 * reset confirmation cost
 	 */
 	RESET_CONFIRMATION_COST("reset_confirmation_has_cost", "&bAre you sure you want to reset your rank for &a${0}&b? Use &7/rankup reset &aagain to confirm!"),
 	/**
-	 * Help rank reset
+	 * scoreboard disabled
 	 */
 	SCOREBOARD_DISABLED("ezscoreboard_disabled", "&cThe scoreboard is currently disabled!"),
+	/**
+	 * scoreboard disabled in current world self
+	 */
+	SCOREBOARD_DISABLED_IN_CURRENT_WORLD_SELF("ezscoreboard_disabled_disabled_in_current_world_self", "&cThe scoreboard is disabled in the world you are currently in!"),
+	/**
+	 * scoreboard disabled in current world others
+	 */
+	SCOREBOARD_DISABLED_IN_CURRENT_WORLD_OTHERS("ezscoreboard_disabled_disabled_in_current_world_others", "&f{0} &cis in a world that has the scoreboard disabled!"),
+	/**
+	 * scoreboard on
+	 */
+	SCOREBOARD_TOGGLE_ON_SELF("ezscoreboard_toggle_on_self", "&aYour scoreboard has been toggled on!"),
+	/**
+	 * scoreboard off
+	 */
+	SCOREBOARD_TOGGLE_OFF_SELF("ezscoreboard_toggle_off_self", "&cYour scoreboard has been toggled off!"),
+	/**
+	 * scoreboard refreshed
+	 */
+	SCOREBOARD_REFRESHED_SELF("ezscoreboard_refreshed_self", "&aYour scoreboard has been refreshed!"),
+	/**
+	 * scoreboard on
+	 */
+	SCOREBOARD_TOGGLE_ON_OTHERS("ezscoreboard_toggle_on_others", "&f{0}s &ascoreboard has been toggled on!"),
+	/**
+	 * scoreboard off
+	 */
+	SCOREBOARD_TOGGLE_OFF_OTHERS("ezscoreboard_toggle_off_others", "&f{0}s &cscoreboard has been toggled off!"),
+	/**
+	 * scoreboard refreshed
+	 */
+	SCOREBOARD_REFRESHED_OTHERS("ezscoreboard_refreshed_others", "&f{0}s &ascoreboard has been refreshed!"),
+	/**
+	 * player not online
+	 */
+	PLAYER_NOT_ONLINE("player_not_online", "&f{0} &cis not online!"),
 	;
 
 	private String path, def;

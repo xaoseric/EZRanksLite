@@ -45,6 +45,7 @@ public class ScoreboardRefreshCommand implements CommandExecutor {
 					Lang.SCOREBOARD_DISABLED.getConfigValue(null));
 			return true;
 		}
+		
 
 		if (!(sender instanceof Player)) {
 
@@ -54,18 +55,31 @@ public class ScoreboardRefreshCommand implements CommandExecutor {
 				Player target = Bukkit.getServer().getPlayer(args[0]);
 
 				if (target == null) {
-					plugin.sms(sender, args[0] + " &cis not online!");
+					plugin.sms(sender, Lang.PLAYER_NOT_ONLINE.getConfigValue(new String[] {
+							args[0]
+					}));
+					return true;
+				}
+				
+				if (plugin.getSbOptions().getDisabledWorlds() != null 
+						&& plugin.getSbOptions().getDisabledWorlds().contains(target.getLocation().getWorld().getName())) {
+					plugin.sms(sender,
+							Lang.SCOREBOARD_DISABLED_IN_CURRENT_WORLD_OTHERS.getConfigValue(new String[] {
+									target.getName(), target.getLocation().getWorld().getName()	
+							}));
 					return true;
 				}
 
 				if (plugin.getBoardhandler().hasScoreboard(target)) {
 					plugin.getBoardhandler().updateScoreboard(target);
-					plugin.sms(sender, "&f" + target.getName()
-							+ "s &bscoreboard has been updated&b.");
+					plugin.sms(sender, Lang.SCOREBOARD_REFRESHED_OTHERS.getConfigValue(new String[] {
+							target.getName()
+					}));
 				} else {
 					plugin.getBoardhandler().createScoreboard(target);
-					plugin.sms(sender, "&f" + target.getName()
-							+ "s &bscoreboard has been toggled &aon&b.");
+					plugin.sms(sender, Lang.SCOREBOARD_TOGGLE_ON_OTHERS.getConfigValue(new String[] {
+							target.getName()
+					}));
 				}
 
 			}
@@ -78,12 +92,22 @@ public class ScoreboardRefreshCommand implements CommandExecutor {
 
 		Player p = (Player) sender;
 		if (args.length == 0) {
+			
+			if (plugin.getSbOptions().getDisabledWorlds() != null 
+					&& plugin.getSbOptions().getDisabledWorlds().contains(p.getLocation().getWorld().getName())) {
+				plugin.sms(sender,
+						Lang.SCOREBOARD_DISABLED_IN_CURRENT_WORLD_SELF.getConfigValue(new String[] {
+								p.getLocation().getWorld().getName()	
+						}));
+				return true;
+			}
+			
 			if (plugin.getBoardhandler().hasScoreboard(p)) {
 				plugin.getBoardhandler().updateScoreboard(p);
-				plugin.sms(sender, "&bYour scoreboard has been updated.");
+				plugin.sms(sender, Lang.SCOREBOARD_REFRESHED_SELF.getConfigValue(null));
 			} else {
 				plugin.getBoardhandler().createScoreboard(p);
-				plugin.sms(sender, "&bYour scoreboard has been toggled &aon&b.");
+				plugin.sms(sender, Lang.SCOREBOARD_TOGGLE_ON_SELF.getConfigValue(null));
 			}
 			return true;
 		} else if (args.length > 0) {
@@ -97,22 +121,33 @@ public class ScoreboardRefreshCommand implements CommandExecutor {
 			Player target = Bukkit.getServer().getPlayer(args[0]);
 
 			if (target == null) {
-				plugin.sms(sender, args[0] + " &cis not online!");
+				plugin.sms(sender, Lang.PLAYER_NOT_ONLINE.getConfigValue(new String[] {
+						args[0]
+				}));
+				return true;
+			}
+			
+			if (plugin.getSbOptions().getDisabledWorlds() != null 
+					&& plugin.getSbOptions().getDisabledWorlds().contains(target.getLocation().getWorld().getName())) {
+				plugin.sms(sender,
+						Lang.SCOREBOARD_DISABLED_IN_CURRENT_WORLD_OTHERS.getConfigValue(new String[] {
+								target.getName(), target.getLocation().getWorld().getName()	
+						}));
 				return true;
 			}
 
 			if (plugin.getBoardhandler().hasScoreboard(target)) {
 				plugin.getBoardhandler().updateScoreboard(target);
-				plugin.sms(target, "&bYour scoreboard has been updated by &f"
-						+ p.getName() + "&b.");
-				plugin.sms(p, "&f" + target.getName()
-						+ "s &bscoreboard has been updated&b.");
+				plugin.sms(target, Lang.SCOREBOARD_REFRESHED_SELF.getConfigValue(null));
+				plugin.sms(p, Lang.SCOREBOARD_REFRESHED_OTHERS.getConfigValue(new String[] {
+						target.getName()
+				}));
 			} else {
 				plugin.getBoardhandler().createScoreboard(target);
-				plugin.sms(target, "&bYour scoreboard has toggled &aon by &f"
-						+ p.getName() + "&b.");
-				plugin.sms(p, "&f" + target.getName()
-						+ "s &bscoreboard has been toggled &aon&b.");
+				plugin.sms(target, Lang.SCOREBOARD_TOGGLE_ON_SELF.getConfigValue(null));
+				plugin.sms(p, Lang.SCOREBOARD_TOGGLE_ON_OTHERS.getConfigValue(new String[] {
+						target.getName()
+				}));
 			}
 
 		}

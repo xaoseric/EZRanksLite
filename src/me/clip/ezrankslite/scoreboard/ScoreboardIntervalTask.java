@@ -19,32 +19,27 @@
  */
 package me.clip.ezrankslite.scoreboard;
 
+import java.util.Set;
+
 import me.clip.ezrankslite.EZRanksLite;
 
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
-
-public class RefreshScoreboardTask implements Runnable {
+public class ScoreboardIntervalTask implements Runnable {
 
 	private EZRanksLite plugin;
 	
-	public RefreshScoreboardTask(EZRanksLite instance) {
+	public ScoreboardIntervalTask(EZRanksLite instance) {
 		plugin = instance;
 	}
 	
 	@Override
 	public void run() {
 		
-		for (String player : plugin.getBoardhandler().boards.keySet()) {
+		final Set<String> players = plugin.getBoardhandler().boards.keySet();
+		
+		for (String player : players) {
 			
-			@SuppressWarnings("deprecation")
-			Player p = Bukkit.getServer().getPlayer(player);
-			
-			if (p == null) {
-				continue;
-			}
-			
-			plugin.getBoardhandler().updateScoreboard(p);
+			plugin.getServer().getScheduler().runTask(plugin,
+					new SoreboardRefreshTask(plugin, player));
 	
 		}
 	}

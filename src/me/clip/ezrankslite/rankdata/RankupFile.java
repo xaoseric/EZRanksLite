@@ -74,26 +74,54 @@ public class RankupFile {
 					"Could not save to " + this.dataFile, ex);
 		}
 	}
+	
+	public void setLastRank(String rank, boolean b) {
+			if (plugin.getRankHandler().getLoadedRanks() != null) {
+				this.dataConfig.set(rank + ".options.ranks_display_order", (plugin.getRankHandler().getLoadedRanks().size()+1));
+			}
+			else {
+				this.dataConfig.set(rank + ".options.ranks_display_order", 1);
+			}
+		
+			this.dataConfig.set(rank + ".options.last_rank", b);
+
+			this.dataConfig.set(rank + ".options.current_prefix", "&8[&c"+rank+"&8]");
+		
+			this.dataConfig.set(rank + ".options.allow_reset", Boolean.valueOf(false));
+		
+			this.dataConfig.set(rank + ".options.reset_cost", "0");
+		
+			this.dataConfig.set(rank + ".options.reset_commands", Arrays.asList(new String[] { "ezbroadcast %player% reset their rank to Guest!", "ezmsg You will need to start over!!", "pex user %player% group set Guest", "clearinventory %player%" }));
+		
+			save();
+	}
 
 	public void createRankSection(String rank, String rankTo, String cost) {
 		String prefix = rank + "." + rankTo + ".";
+		if (!this.dataConfig.contains(rank + ".options.ranks_display_order")) {
+			if (plugin.getRankHandler().getLoadedRanks() != null) {
+				this.dataConfig.set(rank + ".options.ranks_display_order", (plugin.getRankHandler().getLoadedRanks().size()+1));
+			}
+			else {
+				this.dataConfig.set(rank + ".options.ranks_display_order", 1);
+			}
+		}
+		this.dataConfig.set(rank + ".options.last_rank", false);
+		if (!this.dataConfig.contains(rank + ".options.rank_prefix")) {
+			this.dataConfig.set(rank + ".options.current_prefix", "&8[&c"+rank+"&8]");
+		}
 		if (!this.dataConfig.contains(rank + ".options.allow_reset")) {
 			this.dataConfig.set(rank + ".options.allow_reset", Boolean.valueOf(false));
 		}
 		if (!this.dataConfig.contains(rank + ".options.reset_cost")) {
 			this.dataConfig.set(rank + ".options.reset_cost", "0");
 		}
-		if (!this.dataConfig.contains(rank + ".options.ranks_display_order")) {
-			if (plugin.getRankHandler().getLoadedRanks() != null) {
-				this.dataConfig.set(rank + ".options.ranks_display_order", (plugin.getRankHandler().getLoadedRanks().size()+1));
-			}
-			this.dataConfig.set(rank + ".options.ranks_display_order", 1);
-		}
 		if (!this.dataConfig.contains(rank + ".options.reset_commands")) {
 			this.dataConfig.set(rank + ".options.reset_commands", Arrays.asList(new String[] { "ezbroadcast %player% reset their rank to Guest!", "ezmsg You will need to start over!!", "pex user %player% group set Guest", "clearinventory %player%" }));
 		}
 		this.dataConfig.set(prefix + "active", Boolean.valueOf(false));
 		this.dataConfig.set(prefix + "confirm_to_rankup", Boolean.valueOf(true));
+		this.dataConfig.set(prefix + "rankup_prefix", "&8[&b"+rankTo+"&8]");
 		this.dataConfig.set(prefix + "cost", cost);
 
 		this.dataConfig.set(prefix + "requirement_message",
@@ -120,6 +148,14 @@ public class RankupFile {
 		return this.dataConfig.getStringList(rank + ".options.reset_commands");
 	}
 	
+	public String rankPrefix(String rank) {
+		return this.dataConfig.getString(rank + ".options.rank_prefix");
+	}
+	
+	public boolean isLastRank(String rank) {
+		return this.dataConfig.getBoolean(rank + ".options.last_rank");
+	}
+	
 	public int displayOrder(String rank) {
 		return this.dataConfig.getInt(rank + ".options.ranks_display_order");
 	}
@@ -132,47 +168,55 @@ public class RankupFile {
 		return this.dataConfig.getConfigurationSection(rank).getKeys(false);
 	}
 
-	public boolean isActive(String rank, String toRank) {
-		return this.dataConfig.getBoolean(rank + "." + toRank + ".active");
+	public boolean isActive(String rank, String rankTo) {
+		return this.dataConfig.getBoolean(rank + "." + rankTo + ".active");
 	}
 	
-	public boolean confirmToRankup(String rank, String toRank) {
-		return this.dataConfig.getBoolean(rank + "." + toRank + ".confirm_to_rankup");
+	public boolean confirmToRankup(String rank, String rankTo) {
+		return this.dataConfig.getBoolean(rank + "." + rankTo + ".confirm_to_rankup");
 	}
 
-	public String getCost(String rank, String toRank) {
-		return this.dataConfig.getString(rank + "." + toRank + ".cost");
+	public String getCost(String rank, String rankTo) {
+		return this.dataConfig.getString(rank + "." + rankTo + ".cost");
+	}
+	
+	public String getRankupPrefix(String rank, String rankTo) {
+		return this.dataConfig.getString(rank + "." + rankTo + ".rankup_prefix");
 	}
 
-	public List<String> getRequirementMessage(String rank, String toRank) {
-		return this.dataConfig.getStringList(rank + "." + toRank
+	public List<String> getRequirementMessage(String rank, String rankTo) {
+		return this.dataConfig.getStringList(rank + "." + rankTo
 				+ ".requirement_message");
 	}
 
-	public List<String> getRankupCommands(String rank, String toRank) {
-		return this.dataConfig.getStringList(rank + "." + toRank
+	public List<String> getRankupCommands(String rank, String rankTo) {
+		return this.dataConfig.getStringList(rank + "." + rankTo
 				+ ".rankup_commands");
 	}
 	
 	public boolean checkValidRankOptions(String rank) {
 		boolean missingEntry = false;
+		if (containsEntry(rank + ".options.ranks_display_order") != true) {
+			missingEntry = true;
+			dataConfig.set(rank + ".options.ranks_display_order", 1);
+		}
+		if (containsEntry(rank + ".options.rank_prefix") != true) {
+			missingEntry = true;
+			dataConfig.set(rank + ".options.rank_prefix", "&8[&c"+rank+"&8]");
+		}
 		if (containsEntry(rank + ".options.allow_reset") != true) {
 			missingEntry = true;
-			
 			dataConfig.set(rank + ".options.allow_reset", false);
-		}
-		if (containsEntry(rank + ".options.reset_commands") != true) {
-			missingEntry = true;
-			dataConfig.set(rank + ".options.reset_commands", "GroupNameHere");
 		}
 		if (containsEntry(rank + ".options.reset_cost") != true) {
 			missingEntry = true;
 			dataConfig.set(rank + ".options.reset_cost", "0");
 		}
-		if (containsEntry(rank + ".options.ranks_display_order") != true) {
+		if (containsEntry(rank + ".options.reset_commands") != true) {
 			missingEntry = true;
-			dataConfig.set(rank + ".options.ranks_display_order", 1);
+			dataConfig.set(rank + ".options.reset_commands", "GroupNameHere");
 		}
+		
 		return missingEntry;
 	}
 
@@ -187,6 +231,10 @@ public class RankupFile {
 		if (containsEntry(rank + "." + rankTo + ".confirm_to_rankup") != true) {
 			missingEntry = true;
 			dataConfig.set(rank + "." + rankTo + ".confirm_to_rankup", true);
+		}
+		if (containsEntry(rank + "." + rankTo + ".rankup_prefix") != true) {
+			missingEntry = true;
+			dataConfig.set(rank + "." + rankTo + ".rankup_prefix", "["+rankTo+"]");
 		}
 		if (containsEntry(rank + "." + rankTo + ".cost") != true) {
 			missingEntry = true;
@@ -226,7 +274,7 @@ public class RankupFile {
 			plugin.getLogger()
 			.info("Valid placeholders for commands are %player% %world% %rankfrom% %rankto% %balance% %cost%");
 			plugin.getLogger()
-			.info("EZRanksLite will automatically take money from the player on a successful rankup");
+			.info("EZRanksLite will automatically take money from the player when a rankup is successful through Vault!");
 			return "No rankups loaded!";
 		}
 			
@@ -239,7 +287,7 @@ public class RankupFile {
 				continue;
 			}
 
-			if (!plugin.getVault().isValidServerGroup(rank)) {
+			if (!plugin.getHooks().isValidServerGroup(rank)) {
 				plugin.getLogger().warning(rank
 						+ " does not exist in the server permissions plugin!");
 				plugin.getLogger()
@@ -255,11 +303,17 @@ public class RankupFile {
 			if (checkValidRankOptions(rank)) {
 				save();
 			}
+			
 			baserank.setRankOrder(displayOrder(rank));
+			
 			if (baserank.setAllowReset(allowReset(rank))) {
 				baserank.setResetCost(resetCost(rank));
 				baserank.setResetCommands(resetCommands(rank));				
 			}
+			
+			baserank.setPrefix(rankPrefix(rank));
+			
+			baserank.setIsLastRank(isLastRank(rank));
 			
 			for (String rankTo : getRankupSections(rank)) {
 				
@@ -267,7 +321,7 @@ public class RankupFile {
 					continue;
 				}
 
-				if (plugin.getVault().isValidServerGroup(rankTo) == false) {
+				if (plugin.getHooks().isValidServerGroup(rankTo) == false) {
 					plugin.getLogger()
 							.warning(rank
 									+ " has a rankup to rank "
@@ -295,6 +349,7 @@ public class RankupFile {
 				}
 				r.setActive(isActive(rank, rankTo));
 				r.setConfirmToRank(confirmToRankup(rank, rankTo));
+				r.setPrefix(getRankupPrefix(rank, rankTo));
 				r.setCost(getCost(rank, rankTo));
 				r.setRequirementMsg(getRequirementMessage(rank, rankTo));
 				r.setCommands(getRankupCommands(rank, rankTo));

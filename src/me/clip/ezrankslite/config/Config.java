@@ -70,6 +70,7 @@ public class Config {
 		config.addDefault("scoreboard.can_rankup", "&a/rankup");
 		config.addDefault("scoreboard.progress_bar.bar_color", "&a");
 		config.addDefault("scoreboard.progress_bar.end_color", "&f");
+		config.addDefault("scoreboard.disabled_worlds", Arrays.asList(new String[] {"world_nether", "world_the_end"}));
 		config.addDefault("money.fix_thousands", true);
 		config.addDefault("money.fix_millions", true);
 		config.addDefault("money.thousands_format", "k");
@@ -144,6 +145,10 @@ public class Config {
 	
 	public String canRankup() {
 		return plugin.getConfig().getString("scoreboard.can_rankup");
+	}
+	
+	public List<String> sbDisabledWorlds() {
+		return plugin.getConfig().getStringList("scoreboard.disabled_worlds");
 	}
 
 	// settings

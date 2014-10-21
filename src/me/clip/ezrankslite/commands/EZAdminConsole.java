@@ -61,6 +61,8 @@ public class EZAdminConsole implements CommandExecutor {
 					+ plugin.getDescription().getVersion() + " &eHelp");
 			plugin.sms(s, "&a/ezadmin createrankup <rankfrom> <rankto> <cost>");
 			plugin.sms(s, "&fCreate a new rankup");
+			plugin.sms(s, "&a/ezadmin setlastrank <rank> <boolean>");
+			plugin.sms(s, "&fSet if a rank is the last rank players can rankup to");
 			plugin.sms(s, "&a/ezadmin deleterankup <rankfrom> <rankto>");
 			plugin.sms(s, "&fDelete a rankup");
 			plugin.sms(s, "&a/ezadmin list");
@@ -85,6 +87,51 @@ public class EZAdminConsole implements CommandExecutor {
 			plugin.sms(s, "&frefresh a players scoreboard");
 			return true;
 		}
+		
+		else if (args[0].equalsIgnoreCase("setlastrank")
+				|| args[0].equalsIgnoreCase("slr")) {
+
+			if (args.length != 3) {
+				plugin.sms(s, "&cIncorrect usage!");
+				plugin.sms(s, "&bType &f/ezadmin help &bfor help");
+				return true;
+			}
+
+			String rank = args[1];
+			
+			if (!isB(args[2].toUpperCase())) {
+				plugin.sms(s, "&cIncorrect usage!");
+				plugin.sms(s, "&bType &f/ezadmin help &bfor help");
+				return true;
+			}
+			
+			// if the groups are valid check if a rankup already exists
+			if (plugin.getHooks().isValidServerGroup(rank)) {
+				
+				boolean is = Boolean.valueOf(args[2]);
+				
+				plugin.getRankFile().setLastRank(rank, is);
+				plugin.getRankFile().reload();
+				plugin.getRankFile().save();
+				String loaded = plugin.getRankFile().loadRankupsFromFile();
+				plugin.sms(s, loaded);
+				if (is) {
+				plugin.sms(s, rank+" &awill now be recognized as a last rank!");
+				}
+				else {
+					plugin.sms(s, rank+" &awill not be recognized as a last rank!");
+				}
+				return true;
+			} else {
+
+				plugin.sms(s, "&4Last rank creation failed!");
+				plugin.sms(s, "&f" + rank + "&b is not a valid server group");
+				
+				return true;
+
+			}
+
+		}
 
 		else if (args[0].equalsIgnoreCase("createrankup")
 				|| args[0].equalsIgnoreCase("cr")) {
@@ -107,8 +154,8 @@ public class EZAdminConsole implements CommandExecutor {
 			String cost = args[3];
 
 			// if the groups are valid check if a rankup already exists
-			if (plugin.getVault().isValidServerGroup(rankFrom)
-					&& plugin.getVault().isValidServerGroup(rankTo)) {
+			if (plugin.getHooks().isValidServerGroup(rankFrom)
+					&& plugin.getHooks().isValidServerGroup(rankTo)) {
 
 				boolean isRankup = false;
 
@@ -150,11 +197,11 @@ public class EZAdminConsole implements CommandExecutor {
 			} else {
 
 				plugin.sms(s, "&4Rankup creation failed!");
-				if (plugin.getVault().isValidServerGroup(rankFrom) == false) {
+				if (plugin.getHooks().isValidServerGroup(rankFrom) == false) {
 					plugin.sms(s, "&f" + rankFrom
 							+ "&b is not a valid server group");
 				}
-				if (plugin.getVault().isValidServerGroup(rankTo) == false) {
+				if (plugin.getHooks().isValidServerGroup(rankTo) == false) {
 					plugin.sms(s, "&f" + rankTo
 							+ "&b is not a valid server group");
 				}
@@ -225,12 +272,18 @@ public class EZAdminConsole implements CommandExecutor {
 			
 			plugin.getRankFile().reload();
 			plugin.getRankFile().save();
+			
+			plugin.getMultiplierConfig().reload();
+			plugin.getMultiplierConfig().save();
+			
 			plugin.reloadConfig();
 			plugin.saveConfig();
 			plugin.loadOptions();
 			String loaded = plugin.getRankFile().loadRankupsFromFile();
 			plugin.sms(s, "&bYou have successfully reloaded EZRanks!");
 			plugin.sms(s, "&f" + loaded);
+			plugin.sms(s, "&f" + plugin.getMultiplierConfig().loadMultipliers()+" &bmultiplier(s) loaded!");
+			plugin.sms(s, "&f" + plugin.getMultiplierConfig().loadDiscounts()+" &bdiscount(s) loaded!");
 			
 			if (plugin.useScoreboard()) {
 				plugin.startScoreboardTask();
@@ -674,6 +727,15 @@ public class EZAdminConsole implements CommandExecutor {
 		}
 		return true;
 	
+	}
+	
+	private boolean isB(String s) {
+		try {
+			Boolean.parseBoolean(s);
+			return true;
+		} catch (Exception e) {
+			return false;
+		}
 	}
 
 }

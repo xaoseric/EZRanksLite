@@ -49,6 +49,7 @@ public class PlayerRankupHandler {
 		double needed = Double.parseDouble(base.getResetCost());
 		
 		if (balance < needed) {
+			//hmmm why am I checking this twice
 			return false;
 		}
 		
@@ -66,8 +67,10 @@ public class PlayerRankupHandler {
 				plugin.sms(p, cmd.replace("%rankfrom%", base.getRank())
 						.replace("%player%", p.getName())
 						.replace("%world%", p.getWorld().getName())
-						.replace("%balance%", EZRanksLite.fixMoney(balance, String.valueOf(balance)))
-						.replace("%cost%", EZRanksLite.fixMoney(needed, base.getResetCost()))
+						.replace("%rankprefix%", base.getPrefix())
+						.replace("%rankfrom%", base.getRank())
+						.replace("%balance%", EZRanksLite.fixMoney(balance))
+						.replace("%cost%", EZRanksLite.fixMoney(needed))
 						.replace("ezmsg ", "")
 						.replace("ezmessage ", ""));
 			}
@@ -75,8 +78,10 @@ public class PlayerRankupHandler {
 				plugin.bcast(cmd.replace("%rankfrom%", base.getRank())
 						.replace("%player%", p.getName())
 						.replace("%world%", p.getWorld().getName())
-						.replace("%balance%", EZRanksLite.fixMoney(balance, String.valueOf(balance)))
-						.replace("%cost%", EZRanksLite.fixMoney(needed, base.getResetCost()))
+						.replace("%rankprefix%", base.getPrefix())
+						.replace("%rankfrom%", base.getRank())
+						.replace("%balance%", EZRanksLite.fixMoney(balance))
+						.replace("%cost%", EZRanksLite.fixMoney(needed))
 						.replace("ezbroadcast ", "")
 						.replace("ezbcast ", ""));
 			}
@@ -84,6 +89,8 @@ public class PlayerRankupHandler {
 			Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), cmd.replace("%rankfrom%", base.getRank())
 					.replace("%player%", p.getName())
 					.replace("%world%", p.getWorld().getName())
+					.replace("%rankprefix%", base.getPrefix())
+					.replace("%rankfrom%", base.getRank())
 					.replace("%balance%", balance + "")
 					.replace("%cost%", needed + ""));	
 			}
@@ -100,24 +107,12 @@ public class PlayerRankupHandler {
 		return true;
 	}
 	
-	public boolean rankupPlayer(final Player p, final EZRank base, final EZRankup r) {
+	public void rankupPlayer(final Player p, final EZRank base, final EZRankup r, final double cost) {
 		
 		OfflinePlayer pl = p;
 		
 		double balance = plugin.getEco().getBalance(pl);
-		double needed = Double.parseDouble(r.getCost());
-		
-		if (balance < needed) {
-			for (String msg : r.getRequirementMsg()) {
-				plugin.sms(p, msg.replace("%rankfrom%", base.getRank())
-						.replace("%rankto%", r.getRank())
-						.replace("%player%", p.getName())
-						.replace("%world%", p.getWorld().getName())
-						.replace("%balance%", EZRanksLite.fixMoney(balance, String.valueOf(balance)))
-						.replace("%cost%", EZRanksLite.fixMoney(needed, r.getCost())));	
-			}
-			return false;
-		}
+
 		
 		List<String> commands = r.getCommands();
 		
@@ -126,7 +121,7 @@ public class PlayerRankupHandler {
 			+ base.getRank() + " to " 
 					+ r.getRank() + "! The player will not be ranked up!");
 			plugin.sms(p, "&cThis rankup is not setup correctly! Please contact an admin!");
-			return false;
+			return;
 		}
 		
 		for (String cmd : commands) {
@@ -134,9 +129,11 @@ public class PlayerRankupHandler {
 				plugin.sms(p, cmd.replace("%rankfrom%", base.getRank())
 						.replace("%rankto%", r.getRank())
 						.replace("%player%", p.getName())
+						.replace("%rankprefix%", base.getPrefix())
+						.replace("%rankupprefix%", r.getPrefix())
 						.replace("%world%", p.getWorld().getName())
-						.replace("%balance%", EZRanksLite.fixMoney(balance, String.valueOf(balance)))
-						.replace("%cost%", EZRanksLite.fixMoney(needed, r.getCost()))
+						.replace("%balance%", EZRanksLite.fixMoney(balance))
+						.replace("%cost%", EZRanksLite.fixMoney(cost))
 						.replace("ezmsg ", "")
 						.replace("ezmessage ", ""));
 			}
@@ -144,9 +141,11 @@ public class PlayerRankupHandler {
 				plugin.bcast(cmd.replace("%rankfrom%", base.getRank())
 						.replace("%rankto%", r.getRank())
 						.replace("%player%", p.getName())
+						.replace("%rankprefix%", base.getPrefix())
+						.replace("%rankupprefix%", r.getPrefix())
 						.replace("%world%", p.getWorld().getName())
-						.replace("%balance%", EZRanksLite.fixMoney(balance, String.valueOf(balance)))
-						.replace("%cost%", EZRanksLite.fixMoney(needed, r.getCost()))
+						.replace("%balance%", EZRanksLite.fixMoney(balance))
+						.replace("%cost%", EZRanksLite.fixMoney(cost))
 						.replace("ezbroadcast ", "")
 						.replace("ezbcast ", ""));
 			}
@@ -184,19 +183,21 @@ public class PlayerRankupHandler {
 					.replace("%player%", p.getName())
 					.replace("%world%", p.getWorld().getName())
 					.replace("%balance%", balance + "")
-					.replace("%cost%", r.getCost()));	
+					.replace("%cost%", EZRanksLite.fixMoney(cost)));
 			}
 		}	
+		
 		EZRankUpEvent rankupEvent = new EZRankUpEvent(p, base.getRank(), r.getRank(), r.getCost());
 		Bukkit.getServer().getPluginManager().callEvent(rankupEvent);
-		plugin.getEco().withdrawMoney(needed, pl);
+		
+		plugin.getEco().withdrawMoney(cost, pl);
+		
 		if (plugin.useScoreboard()) {
 			if (plugin.getBoardhandler().hasScoreboard(p)) {
 				plugin.getBoardhandler().updateScoreboard(p);
 			}
-			
 		}
-		return true;
+		
 	}
 
 }

@@ -57,7 +57,7 @@ public class VaultPerms {
 		return perms.getPlayerGroups(p);
 	}
 	
-	public String getMainGroup(Player p) {
+	public String getGroup(Player p) {
 		return perms.getPrimaryGroup(p);
 	}
 	
@@ -69,7 +69,7 @@ public class VaultPerms {
 		return perms.getGroups();
 	}
 	
-	public boolean isValidServerGroup(String group) {
+	public boolean isValidGroup(String group) {
 		boolean isValid = false;
 		for (String g : getServerGroups()) {
 			if (g.equals(group)) {

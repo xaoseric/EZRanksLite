@@ -30,15 +30,18 @@ import me.clip.ezrankslite.commands.ScoreboardToggleCommand;
 import me.clip.ezrankslite.config.Config;
 import me.clip.ezrankslite.config.ConfigWrapper;
 import me.clip.ezrankslite.effects.EffectsHandler;
+import me.clip.ezrankslite.hooks.Hooks;
 import me.clip.ezrankslite.hooks.VaultEco;
 import me.clip.ezrankslite.hooks.VaultPerms;
-import me.clip.ezrankslite.listeners.JoinListener;
+import me.clip.ezrankslite.listeners.PlayerListener;
 import me.clip.ezrankslite.metricslite.MetricsLite;
+import me.clip.ezrankslite.multipliers.CostHandler;
+import me.clip.ezrankslite.multipliers.MultiplierFile;
 import me.clip.ezrankslite.rankdata.PlayerRankupHandler;
 import me.clip.ezrankslite.rankdata.RankHandler;
 import me.clip.ezrankslite.rankdata.RankupFile;
 import me.clip.ezrankslite.scoreboard.PlaceHolderHandler;
-import me.clip.ezrankslite.scoreboard.RefreshScoreboardTask;
+import me.clip.ezrankslite.scoreboard.ScoreboardIntervalTask;
 import me.clip.ezrankslite.scoreboard.ScoreboardHandler;
 import me.clip.ezrankslite.scoreboard.ScoreboardOptions;
 
@@ -55,10 +58,13 @@ public class EZRanksLite extends JavaPlugin {
 	private PlayerRankupHandler playerhandler = new PlayerRankupHandler(this);
 	private RankHandler rankhandler = new RankHandler(this);
 	private ScoreboardHandler boardhandler = new ScoreboardHandler(this);
+	protected CostHandler multipliers = new CostHandler(this);
+	
 	private PlaceHolderHandler placeholders = new PlaceHolderHandler(this);
 
 	private VaultPerms vaultperms = new VaultPerms(this);
 	private VaultEco vaulteco = new VaultEco(this);
+	private Hooks hooks = new Hooks(this);
 
 	private EZAdminCommand admincommand = new EZAdminCommand(this);
 	private RankupCommand rankupcommand = new RankupCommand(this);
@@ -70,6 +76,7 @@ public class EZRanksLite extends JavaPlugin {
 
 	private Config config = new Config(this);
 	private RankupFile rankupfile = new RankupFile(this);
+	private MultiplierFile multiplierfile = new MultiplierFile(this);
 	private ConfigWrapper messagesFile = new ConfigWrapper(this, "",
 			"messages.yml");
 
@@ -100,6 +107,8 @@ public class EZRanksLite extends JavaPlugin {
 	public static boolean useVoteParty = false;
 	
 	private static EZRanksLite instance;
+	
+	private static boolean useSQLPerms;
 
 	@Override
 	public void onEnable() {
@@ -108,6 +117,15 @@ public class EZRanksLite extends JavaPlugin {
 						.isEnabled()) {
 			useVoteParty = true;
 		}
+		
+		if (Bukkit.getServer().getPluginManager().getPlugin("SQLPerms") != null
+				&& Bukkit.getServer().getPluginManager().getPlugin("SQLPerms")
+						.isEnabled()) {
+			debug(true,
+					"SQLPerms was detected and will be used instead of Vault for permissions!");
+			useSQLPerms = true;
+		}
+		
 		
 		if (!vaultperms.setupVault()) {
 			debug(true,
@@ -125,8 +143,14 @@ public class EZRanksLite extends JavaPlugin {
 		messagesFile.createNewFile("Loading EZRanksLite messages.yml",
 				"EZRanksLite messages file");
 		loadMessages();
-
 		getLogger().info(rankupfile.loadRankupsFromFile());
+		
+		multiplierfile.reload();
+		multiplierfile.save();
+		
+		getLogger().info(multiplierfile.loadDiscounts()+" rankup cost discounts loaded!");
+		getLogger().info(multiplierfile.loadMultipliers()+" rankup cost multipliers loaded!");
+		
 		registerCmds();
 		registerListeners();
 		if (!startMetricsLite()) {
@@ -143,6 +167,7 @@ public class EZRanksLite extends JavaPlugin {
 	public void onDisable() {
 		stopScoreboardTask();
 		instance = null;
+		sbOptions = null;
 	}
 
 	private void registerCmds() {
@@ -220,6 +245,7 @@ public class EZRanksLite extends JavaPlugin {
 		options.setNoRankups(config.noRankups());
 		options.setpBarColor(config.getProgressBarColor());
 		options.setpBarEndColor(config.getProgressBarEndColor());
+		options.setDisabledWorlds(config.sbDisabledWorlds());
 		sbOptions = options;
 		debug(false, "Scoreboard options loaded!");
 		return options;
@@ -227,7 +253,7 @@ public class EZRanksLite extends JavaPlugin {
 
 	private void registerListeners() {
 		Bukkit.getServer().getPluginManager()
-				.registerEvents(new JoinListener(this), this);
+				.registerEvents(new PlayerListener(this), this);
 	}
 
 	public VaultPerms getVault() {
@@ -261,6 +287,10 @@ public class EZRanksLite extends JavaPlugin {
 	public RankupFile getRankFile() {
 		return rankupfile;
 	}
+	
+	public MultiplierFile getMultiplierConfig() {
+		return multiplierfile;
+	}
 
 	public void debug(boolean severe, String msg) {
 		if (severe) {
@@ -285,16 +315,16 @@ public class EZRanksLite extends JavaPlugin {
 	public void startScoreboardTask() {
 		if (useScoreboard) {
 			if (sbTask == null) {
-				sbTask = getServer().getScheduler().runTaskTimer(this,
-						new RefreshScoreboardTask(this), 0L, (20L * sbRefresh));
+				sbTask = getServer().getScheduler().runTaskTimerAsynchronously(this,
+						new ScoreboardIntervalTask(this), 0L, (20L * sbRefresh));
 				debug(false,
 						"Scoreboard refresh task has started and will refresh every "
 								+ sbRefresh + " seconds.");
 			} else {
 				sbTask.cancel();
 				sbTask = null;
-				sbTask = getServer().getScheduler().runTaskTimer(this,
-						new RefreshScoreboardTask(this), 0L, (20L * sbRefresh));
+				sbTask = getServer().getScheduler().runTaskTimerAsynchronously(this,
+						new ScoreboardIntervalTask(this), 0L, (20L * sbRefresh));
 				debug(false,
 						"Scoreboard refresh task has started and will refresh every "
 								+ sbRefresh + " seconds.");
@@ -322,8 +352,23 @@ public class EZRanksLite extends JavaPlugin {
 		Bukkit.broadcastMessage(ChatColor
 				.translateAlternateColorCodes('&', msg));
 	}
-
+	
+	public static String getDifference(double balance, double cost) {
+		
+		double diff = cost-balance;
+		
+		if (diff <= 0) {
+			return "0";
+		}
+		return fixMoney(diff);
+	}
+	
+	@Deprecated
 	public static String fixMoney(double amount, String amt) {
+		return fixMoney(amount);
+	}
+
+	public static String fixMoney(double amount) {
 
 		if (amount >= 1000000000000000.0D)
 			if (fixMillions) {
@@ -364,14 +409,8 @@ public class EZRanksLite extends JavaPlugin {
 						new Object[] { Double.valueOf(amount / 1000.0D) });
 			}
 		}
-		if (amt.contains(".")) {
-			String[] parts = amt.split(".");
-			if (parts == null || parts.length < 1 || parts[0].isEmpty()) {
-				return amt;
-			}
-			return parts[0];
-		}
-		return amt;
+		return String.format("%.2f",
+				new Object[] { amount });
 	}
 
 	public boolean isDouble(String s) {
@@ -434,9 +473,14 @@ public class EZRanksLite extends JavaPlugin {
 	public static EZAPI getAPI() {
 		return new EZAPI(instance);
 	}
+
+	public boolean useSQLPerms() {
+		return useSQLPerms;
+	}
 	
-	
-	
-	
+	public Hooks getHooks() {
+		return hooks;
+	}
+
 
 }
