@@ -76,6 +76,7 @@ public class RankupFile {
 	}
 	
 	public void setLastRank(String rank, boolean b) {
+		
 			if (plugin.getRankHandler().getLoadedRanks() != null) {
 				this.dataConfig.set(rank + ".options.ranks_display_order", (plugin.getRankHandler().getLoadedRanks().size()+1));
 			}

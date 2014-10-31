@@ -78,8 +78,14 @@ public class Config {
 		config.addDefault("money.billions_format", "B");
 		config.addDefault("money.trillions_format", "T");
 		config.addDefault("money.quadrillions_format", "Q");
+		config.addDefault("check_updates", true);
 		config.options().copyDefaults(true);
 		plugin.saveConfig();
+	}
+	
+	
+	public boolean checkUpdates() {
+			return plugin.getConfig().getBoolean("check_updates");
 	}
 	
 	public String getProgressBarEndColor() {

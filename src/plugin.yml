@@ -1,6 +1,6 @@
 name: EZRanksLite
 main: me.clip.ezrankslite.EZRanksLite
-version: 1.5.3.1
+version: 1.5.4
 author: extended_clip
 depend: [Vault]
 softdepend: [PermissionsEx, VoteParty, SQLPerms]

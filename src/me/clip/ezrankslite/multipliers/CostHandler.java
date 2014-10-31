@@ -13,7 +13,7 @@ public class CostHandler {
 	public CostHandler(EZRanksLite i) {
 		plugin = i;
 	}
-
+    //                       priority, discount object that holds permission and discount
 	protected static TreeMap<Integer, Discount> discounts = new TreeMap<Integer, Discount>();
 	protected static TreeMap<Integer, CostMultiplier> multipliers = new TreeMap<Integer, CostMultiplier>();
 

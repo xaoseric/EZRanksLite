@@ -186,11 +186,13 @@ public class EZAdminCommand implements CommandExecutor {
 					EZRank ezrank = plugin.getRankHandler().getRankData(
 							rankFrom);
 
+					if (ezrank.hasRankups()) {
 					for (EZRankup r : ezrank.getRankups()) {
 						if (r.getRank().equals(rankTo)) {
 							isRankup = true;
 							break;
 						}
+					}
 					}
 				}
 

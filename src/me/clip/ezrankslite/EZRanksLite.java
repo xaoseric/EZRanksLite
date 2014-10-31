@@ -44,6 +44,7 @@ import me.clip.ezrankslite.scoreboard.PlaceHolderHandler;
 import me.clip.ezrankslite.scoreboard.ScoreboardIntervalTask;
 import me.clip.ezrankslite.scoreboard.ScoreboardHandler;
 import me.clip.ezrankslite.scoreboard.ScoreboardOptions;
+import me.clip.ezrankslite.updater.Updater;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -109,7 +110,12 @@ public class EZRanksLite extends JavaPlugin {
 	private static EZRanksLite instance;
 	
 	private static boolean useSQLPerms;
-
+	
+	private Updater spigotUpdater = null;
+	
+	private static boolean checkUpdates;
+	
+	
 	@Override
 	public void onEnable() {
 		if (Bukkit.getServer().getPluginManager().getPlugin("VoteParty") != null
@@ -160,7 +166,21 @@ public class EZRanksLite extends JavaPlugin {
 			debug(false, "Scoreboard features are enabled!");
 			startScoreboardTask();
 		}
+		
 		instance = this;
+		
+		checkUpdates = config.checkUpdates();
+		
+		if (checkUpdates) {
+			spigotUpdater = new Updater(this);
+			if (spigotUpdater.checkUpdate()) {
+				getLogger().info("An update for EZRanksLite (EZRanksLite v"+Updater.getLatestVersion()+") is available at http://www.spigotmc.org/resources/ezrankslite.762/");
+			}
+			else {
+				getLogger().info("You are running the latest version of EZRanksLite!");
+			}
+		}
+
 	}
 
 	@Override
@@ -481,6 +501,17 @@ public class EZRanksLite extends JavaPlugin {
 	public Hooks getHooks() {
 		return hooks;
 	}
+	
+	public boolean checkUpdates() {
+		return checkUpdates;
+	}
+	
+	public Updater getUpdater() {
+		return spigotUpdater;
+	}
 
+	public static EZRanksLite i() {
+		return instance;
+	}
 
 }
