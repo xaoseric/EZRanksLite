@@ -65,6 +65,8 @@ public class EZAPI {
 		plugin.getPlaceholders().setPlayerPlaceholder(playername, identifier, value);
 	}
 	
+
+	
 	@Deprecated
 	public void setCustomPlaceholder(String playername, String identifier, String value) {
 		plugin.getPlaceholders().setPlayerPlaceholder(playername, identifier, value);
@@ -95,6 +97,15 @@ public class EZAPI {
 		plugin.getPlaceholders().setGlobalPlaceholder(identifier, value);
 	}
 	
+	/**
+	 * force an update to the EZRanksLite scoreboard for a specific player if the show scoreboard conditions are met
+	 * inside of EZRanksLite (if scoreboard is enabled, if player is in enabled world, if player has scoreboard toggled on)
+	 * this will update all placeholders
+	 * @param p player to update the EZRanksLite scoreboard for
+	 */
+	public void updateScoreboard(Player p) {
+		plugin.getBoardhandler().updateScoreboard(p);
+	}
 
 	/**
 	 * get the current permission rank of a player

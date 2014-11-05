@@ -38,6 +38,12 @@ public class PlaceHolderHandler {
 
 	public void setPlayerPlaceholder(String player, String identifier,
 			String value) {
+		if (!identifier.startsWith("%")) {
+			identifier = "%" + identifier;
+		}
+		if (!identifier.endsWith("%")) {
+			identifier = identifier + "%";
+		}
 		Map<String, String> current = playerPlaceholders.get(player);
 		
 		if (current == null) {

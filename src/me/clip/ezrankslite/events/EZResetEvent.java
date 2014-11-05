@@ -21,22 +21,23 @@ package me.clip.ezrankslite.events;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
-public class EZResetEvent extends Event {
+public class EZResetEvent extends Event implements Cancellable {
 
 	private static final HandlerList handlers = new HandlerList();
-	String pname;
-	String oldrank;
-	String newrank;
-	String resetCost;
-
-	public EZResetEvent(Player p, String oldrank, String newrank, String resetCost) {
+	private String pname;
+	private String oldrank;
+	private String newrank;
+	private String resetCost;
+	private boolean cancelled;
+	
+	public EZResetEvent(Player p, String oldrank, String resetCost) {
 
 		this.pname = p.getName();
 		this.oldrank = oldrank;
-		this.newrank = newrank;
 		this.resetCost = resetCost;
 
 	}
@@ -47,6 +48,10 @@ public class EZResetEvent extends Event {
 
 	public String getResetRank() {
 		return newrank;
+	}
+	
+	public String getResetCost() {
+		return resetCost;
 	}
 
 	public String getPlayerName() {
@@ -67,5 +72,14 @@ public class EZResetEvent extends Event {
 		return handlers;
 	}
 
+	@Override
+	public boolean isCancelled() {
+		return cancelled;
+	}
+
+	@Override
+	public void setCancelled(boolean cancelled) {
+		this.cancelled = cancelled;
+	}
 
 }

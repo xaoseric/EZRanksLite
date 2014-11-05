@@ -25,6 +25,8 @@ import java.util.List;
 
 import me.clip.ezrankslite.EZRanksLite;
 import me.clip.ezrankslite.Lang;
+import me.clip.ezrankslite.events.EZRankupEvent;
+import me.clip.ezrankslite.events.EZResetEvent;
 import me.clip.ezrankslite.multipliers.CostHandler;
 import me.clip.ezrankslite.rankdata.EZRank;
 import me.clip.ezrankslite.rankdata.EZRankup;
@@ -127,52 +129,22 @@ public class RankupCommand implements CommandExecutor {
 
 				if (balance < needed) {
 					for (String msg : ru.getRequirementMsg()) {
-						plugin.sms(
-								p,
-								msg.replace("%rankfrom%", ezrank.getRank())
-										.replace("%rankto%", ru.getRank())
-										.replace("%rankprefix%",
-												ezrank.getPrefix())
-										.replace("%rankupprefix%",
-												ru.getPrefix())
-										.replace("%player%", p.getName())
-										.replace(
-												"%progress%",
-												plugin.getBoardhandler()
-														.getProgress(
-																balance,
-																String.valueOf(needed))
-														+ "")
-										.replace(
-												"%progressbar%",
-												plugin.getBoardhandler()
-														.getProgressBar(
-																plugin.getBoardhandler()
-																		.getProgress(
-																				balance,
-																				String.valueOf(needed)),
-																plugin.getSbOptions()
-																		.getpBarColor(),
-																plugin.getSbOptions()
-																		.getpBarEndColor()))
-										.replace(
-												"%difference%",
-												EZRanksLite.getDifference(
-														balance, needed))
-										.replace(
-												"%costdifference%",
-												EZRanksLite.getDifference(
-														balance, needed))
-										.replace("%world%",
-												p.getWorld().getName())
-										.replace(
-												"%balance%",
-												EZRanksLite
-														.fixMoney(
-																balance))
-										.replace(
-												"%cost%",
-												EZRanksLite.fixMoney(needed)));
+						plugin.sms(p, msg.replace("%rankfrom%", ezrank.getRank())
+									   	 .replace("%rankto%", ru.getRank())
+										 .replace("%rankprefix%", ezrank.getPrefix())
+										 .replace("%rankupprefix%", ru.getPrefix())
+										 .replace("%player%", p.getName())
+										 .replace("%progress%", plugin.getBoardhandler()
+												                      .getProgress(balance, String.valueOf(needed)) + "")
+										 .replace("%progressbar%", plugin.getBoardhandler().getProgressBar(plugin.getBoardhandler()
+																	     .getProgress(balance, String.valueOf(needed)),
+																   plugin.getSbOptions().getpBarColor(),
+																   plugin.getSbOptions().getpBarEndColor()))
+										.replace("%difference%", EZRanksLite.getDifference(balance, needed))
+										.replace("%costdifference%", EZRanksLite.getDifference(balance, needed))
+										.replace("%world%", p.getWorld().getName())
+										.replace("%balance%", EZRanksLite.fixMoney(balance))
+										.replace("%cost%", EZRanksLite.fixMoney(needed)));
 					}
 					return true;
 				}
@@ -209,6 +181,17 @@ public class RankupCommand implements CommandExecutor {
 					}
 
 					wtc.remove(p.getName());
+				}
+				
+				//player has enough money and they have confirmed the rankup if one is available
+				
+				EZRankupEvent rankupEvent = new EZRankupEvent(p, ezrank.getRank(), ru.getRank(), String.valueOf(needed));
+				Bukkit.getServer().getPluginManager().callEvent(rankupEvent);
+				
+				if (rankupEvent.isCancelled()) {
+					plugin.debug(false, p.getName()+" attempted to rankup from "+ezrank.getRank()+" to " + ru.getRank());
+					plugin.debug(false, "but the rankup event was cancelled by another plugin!");
+					return true;
 				}
 
 				plugin.getPlayerhandler().rankupPlayer(p, ezrank, ru, needed);
@@ -330,36 +313,36 @@ public class RankupCommand implements CommandExecutor {
 				}
 
 				reset.remove(p.getName());
+				
+				EZResetEvent resetEvent = new EZResetEvent(p, ezrank.getRank(), ezrank.getResetCost());
+				Bukkit.getServer().getPluginManager().callEvent(resetEvent);
 
-				if (plugin.getPlayerhandler().resetPlayer(p, ezrank)) {
-					if (plugin.useRankupCooldown()) {
-						if (!p.hasPermission("ezadmin.cooldown.bypass")) {
-							cooldown.add(p.getName());
-							plugin.debug(false, p.getName()
-									+ " added to rankup cooldown");
-							final String plname = p.getName();
-							final int time = plugin.getRankupCooldownTime();
-							Bukkit.getScheduler().scheduleSyncDelayedTask(
-									this.plugin, new Runnable() {
-										public void run() {
-											if (cooldown.contains(plname)) {
-												cooldown.remove(plname);
-												plugin.debug(
-														false,
-														plname
-																+ " removed from rankup cooldown");
-											}
+				if (resetEvent.isCancelled()) {
+					plugin.debug(false, p.getName() + " attempted to reset from " + ezrank.getRank());
+					plugin.debug(false, "but the reset event was cancelled by another plugin!");
+					return true;
+				}
+				
+				plugin.getPlayerhandler().resetPlayer(p, ezrank);
+				
+				plugin.debug(false, p.getName() + " reset their rank from "+ezrank.getRank());
+				
+				if (plugin.useRankupCooldown()) {
+					if (!p.hasPermission("ezadmin.cooldown.bypass")) {
+						cooldown.add(p.getName());
+						plugin.debug(false, p.getName()+" added to rankup cooldown");
+						final String plname = p.getName();
+						final int time = plugin.getRankupCooldownTime();
+						Bukkit.getScheduler().scheduleSyncDelayedTask(
+								this.plugin, new Runnable() {
+									public void run() {
+										if (cooldown.contains(plname)) {
+											cooldown.remove(plname);
+											plugin.debug(false, plname+" removed from rankup cooldown");
 										}
-									}, (20 * time));
-
-						}
+									}
+								}, (20 * time));
 					}
-					plugin.debug(false, p.getName() + " reset their rank from "
-							+ ezrank.getRank());
-				} else {
-					plugin.debug(false, p.getName()
-							+ " attempted but failed a rank reset from "
-							+ ezrank.getRank());
 				}
 
 				return true;
@@ -507,11 +490,21 @@ public class RankupCommand implements CommandExecutor {
 
 				wtc.remove(p.getName());
 			}
+			
+			
+			EZRankupEvent rankupEvent = new EZRankupEvent(p, ezrank.getRank(), rankup.getRank(), String.valueOf(needed));
+			Bukkit.getServer().getPluginManager().callEvent(rankupEvent);
+			
+			if (rankupEvent.isCancelled()) {
+				plugin.debug(false, p.getName() + " attempted to rankup from " + ezrank.getRank()
+								+ " to " + rankup.getRank());
+				plugin.debug(false, "but the rankup event was cancelled by another plugin!");
+				return true;
+			}
 
 			plugin.getPlayerhandler().rankupPlayer(p, ezrank, rankup, needed);
 
-			plugin.debug(false,
-					p.getName() + " ranked up from " + ezrank.getRank()
+			plugin.debug(false, p.getName() + " ranked up from " + ezrank.getRank()
 							+ " to " + rankup.getRank());
 
 			if (plugin.useRankupCooldown()) {

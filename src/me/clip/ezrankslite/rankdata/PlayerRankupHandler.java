@@ -26,111 +26,129 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
 import me.clip.ezrankslite.EZRanksLite;
-import me.clip.ezrankslite.events.EZRankUpEvent;
-import me.clip.ezrankslite.events.EZResetEvent;
 
 public class PlayerRankupHandler {
 	
 	EZRanksLite plugin;
 	
+	/**
+	 * Handles rank up and reset command execution/economy transactions
+	 * @param instance
+	 */
 	public PlayerRankupHandler(EZRanksLite instance) {
 		plugin = instance;
 	}
 	
-	public boolean resetPlayer(final Player p, final EZRank base) {
+	/**
+	 * reset a players rank if the EZRank object allows it
+	 * by running the reset_commands defined in the rankups.yml
+	 * for the specific base rank.
+	 * This will also handle the economy transaction to take the money needed
+	 * to reset
+	 * @param p Player object to reset 
+	 * @param baseRank EZRank object associated with the Player permission group
+	 */
+	public void resetPlayer(final Player p, final EZRank baseRank) {
 		
-		if (!base.allowReset()) {
-			return false;
+		if (!baseRank.allowReset()) {
+			return;
 		}
 		
 		OfflinePlayer pl = p;
 		
 		double balance = plugin.getEco().getBalance(pl);
-		double needed = Double.parseDouble(base.getResetCost());
+		double needed = Double.parseDouble(baseRank.getResetCost());
 		
-		if (balance < needed) {
-			//hmmm why am I checking this twice
-			return false;
-		}
-		
-		List<String> commands = base.getResetCommands();
+		List<String> commands = baseRank.getResetCommands();
 		
 		if (commands == null || commands.isEmpty()) {
 			plugin.debug(true, "There were no reset_commands for rank " 
-			+ base.getRank() + "! Players will not be reset!");
+			+ baseRank.getRank() + "! Players will not be reset!");
 			plugin.sms(p, "&cThis reset is not setup correctly! Please contact an admin!");
-			return false;
+			return;
 		}
 		
 		for (String cmd : commands) {
 			if (cmd.startsWith("ezmsg") || cmd.startsWith("ezmessage")) {
-				plugin.sms(p, cmd.replace("%rankfrom%", base.getRank())
+				plugin.sms(p, cmd.replace("%rankfrom%", baseRank.getRank())
 						.replace("%player%", p.getName())
 						.replace("%world%", p.getWorld().getName())
-						.replace("%rankprefix%", base.getPrefix())
-						.replace("%rankfrom%", base.getRank())
+						.replace("%rankprefix%", baseRank.getPrefix())
+						.replace("%rankfrom%", baseRank.getRank())
 						.replace("%balance%", EZRanksLite.fixMoney(balance))
 						.replace("%cost%", EZRanksLite.fixMoney(needed))
 						.replace("ezmsg ", "")
 						.replace("ezmessage ", ""));
 			}
 			else if (cmd.startsWith("ezbroadcast") || cmd.startsWith("ezbcast")) {
-				plugin.bcast(cmd.replace("%rankfrom%", base.getRank())
+				plugin.bcast(cmd.replace("%rankfrom%", baseRank.getRank())
 						.replace("%player%", p.getName())
 						.replace("%world%", p.getWorld().getName())
-						.replace("%rankprefix%", base.getPrefix())
-						.replace("%rankfrom%", base.getRank())
+						.replace("%rankprefix%", baseRank.getPrefix())
+						.replace("%rankfrom%", baseRank.getRank())
 						.replace("%balance%", EZRanksLite.fixMoney(balance))
 						.replace("%cost%", EZRanksLite.fixMoney(needed))
 						.replace("ezbroadcast ", "")
 						.replace("ezbcast ", ""));
 			}
 			else {
-			Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), cmd.replace("%rankfrom%", base.getRank())
+			Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), cmd.replace("%rankfrom%", baseRank.getRank())
 					.replace("%player%", p.getName())
 					.replace("%world%", p.getWorld().getName())
-					.replace("%rankprefix%", base.getPrefix())
-					.replace("%rankfrom%", base.getRank())
+					.replace("%rankprefix%", baseRank.getPrefix())
+					.replace("%rankfrom%", baseRank.getRank())
 					.replace("%balance%", balance + "")
 					.replace("%cost%", needed + ""));	
 			}
 		}	
-		EZResetEvent resetEvent = new EZResetEvent(p, base.getRank(), base.getRank(), base.getResetCost());
-		Bukkit.getServer().getPluginManager().callEvent(resetEvent);
+		
 		plugin.getEco().withdrawMoney(needed, pl);
+		
 		if (plugin.useScoreboard()) {
 			if (plugin.getBoardhandler().hasScoreboard(p)) {
 				plugin.getBoardhandler().updateScoreboard(p);
 			}
 			
 		}
-		return true;
+		return;
 	}
 	
-	public void rankupPlayer(final Player p, final EZRank base, final EZRankup r, final double cost) {
+	/**
+	 * rank a player up by handling the economy transaction associated with the EZRankup object
+	 * by running the rankup_commands defined in the rankups.yml
+	 * for the specific rankup.
+	 * This will also handle the economy transaction to take the money needed
+	 * to rankup
+	 * @param p Player object to rankup 
+	 * @param baseRank EZRank object associated with the Player permission group
+	 * @param rankup EZRankup object that holds the information related to the rank the player is ranking up to
+	 * @param cost double value of the cost to rankup
+	 */
+	public void rankupPlayer(final Player p, final EZRank baseRank, final EZRankup rankup, final double cost) {
 		
-		OfflinePlayer pl = p;
-		
-		double balance = plugin.getEco().getBalance(pl);
-
-		
-		List<String> commands = r.getCommands();
+		List<String> commands = rankup.getCommands();
 		
 		if (commands == null || commands.isEmpty()) {
 			plugin.debug(true, "There were no rankup_commands for rankup " 
-			+ base.getRank() + " to " 
-					+ r.getRank() + "! The player will not be ranked up!");
+			+ baseRank.getRank() + " to " 
+					+ rankup.getRank() + "! The player will not be ranked up!");
 			plugin.sms(p, "&cThis rankup is not setup correctly! Please contact an admin!");
 			return;
 		}
 		
+		OfflinePlayer pl = p;
+		
+		double balance = plugin.getEco().getBalance(pl);
+		
+		plugin.getEco().withdrawMoney(cost, pl);
+		
 		for (String cmd : commands) {
 			if (cmd.startsWith("ezmsg") || cmd.startsWith("ezmessage")) {
-				plugin.sms(p, cmd.replace("%rankfrom%", base.getRank())
-						.replace("%rankto%", r.getRank())
+				plugin.sms(p, cmd.replace("%rankfrom%", baseRank.getRank())
+						.replace("%rankto%", rankup.getRank())
 						.replace("%player%", p.getName())
-						.replace("%rankprefix%", base.getPrefix())
-						.replace("%rankupprefix%", r.getPrefix())
+						.replace("%rankprefix%", baseRank.getPrefix())
+						.replace("%rankupprefix%", rankup.getPrefix())
 						.replace("%world%", p.getWorld().getName())
 						.replace("%balance%", EZRanksLite.fixMoney(balance))
 						.replace("%cost%", EZRanksLite.fixMoney(cost))
@@ -138,11 +156,11 @@ public class PlayerRankupHandler {
 						.replace("ezmessage ", ""));
 			}
 			else if (cmd.startsWith("ezbroadcast") || cmd.startsWith("ezbcast")) {
-				plugin.bcast(cmd.replace("%rankfrom%", base.getRank())
-						.replace("%rankto%", r.getRank())
+				plugin.bcast(cmd.replace("%rankfrom%", baseRank.getRank())
+						.replace("%rankto%", rankup.getRank())
 						.replace("%player%", p.getName())
-						.replace("%rankprefix%", base.getPrefix())
-						.replace("%rankupprefix%", r.getPrefix())
+						.replace("%rankprefix%", baseRank.getPrefix())
+						.replace("%rankupprefix%", rankup.getPrefix())
 						.replace("%world%", p.getWorld().getName())
 						.replace("%balance%", EZRanksLite.fixMoney(balance))
 						.replace("%cost%", EZRanksLite.fixMoney(cost))
@@ -176,21 +194,15 @@ public class PlayerRankupHandler {
 					plugin.getEffectsHandler().explosion(p.getLocation());
 				}
 				
-			}
-			else {
-			Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), cmd.replace("%rankfrom%", base.getRank())
-					.replace("%rankto%", r.getRank())
+			} else {
+			Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), cmd.replace("%rankfrom%", baseRank.getRank())
+					.replace("%rankto%", rankup.getRank())
 					.replace("%player%", p.getName())
 					.replace("%world%", p.getWorld().getName())
 					.replace("%balance%", balance + "")
 					.replace("%cost%", EZRanksLite.fixMoney(cost)));
 			}
 		}	
-		
-		EZRankUpEvent rankupEvent = new EZRankUpEvent(p, base.getRank(), r.getRank(), r.getCost());
-		Bukkit.getServer().getPluginManager().callEvent(rankupEvent);
-		
-		plugin.getEco().withdrawMoney(cost, pl);
 		
 		if (plugin.useScoreboard()) {
 			if (plugin.getBoardhandler().hasScoreboard(p)) {

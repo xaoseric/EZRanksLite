@@ -67,12 +67,14 @@ public class ScoreboardHandler {
 	}
 
 	public void updateScoreboard(Player p) {
+		if (plugin.useScoreboard()) {
 		if (plugin.getSbOptions().getDisabledWorlds() != null && 
 				plugin.getSbOptions().getDisabledWorlds().contains(p.getLocation().getWorld().getName())) {
 			return;
 		}
 		if (hasScoreboard(p)) {
 			createScoreboard(p);
+		}
 		}
 	}
 

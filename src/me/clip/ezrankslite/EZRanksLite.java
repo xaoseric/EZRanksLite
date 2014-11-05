@@ -118,10 +118,11 @@ public class EZRanksLite extends JavaPlugin {
 	
 	@Override
 	public void onEnable() {
-		if (Bukkit.getServer().getPluginManager().getPlugin("VoteParty") != null
-				&& Bukkit.getServer().getPluginManager().getPlugin("VoteParty")
-						.isEnabled()) {
-			useVoteParty = true;
+		
+		if (!vaulteco.setupEconomy()) {
+			debug(true,
+					"Could not hook into an Economy plugin through Vault! Disabling EZRanksLite!");
+			Bukkit.getServer().getPluginManager().disablePlugin(this);
 		}
 		
 		if (Bukkit.getServer().getPluginManager().getPlugin("SQLPerms") != null
@@ -130,25 +131,26 @@ public class EZRanksLite extends JavaPlugin {
 			debug(true,
 					"SQLPerms was detected and will be used instead of Vault for permissions!");
 			useSQLPerms = true;
-		}
-		
-		
-		if (!vaultperms.setupVault()) {
+		} else if (!vaultperms.setupVault()) {
 			debug(true,
 					"Could not detect Vault for permissions Hooking! Disabling EZRanksLite!");
 			Bukkit.getServer().getPluginManager().disablePlugin(this);
-		} else if (!vaulteco.setupEconomy()) {
-			debug(true,
-					"Could not hook into an Economy plugin through Vault! Disabling EZRanksLite!");
-			Bukkit.getServer().getPluginManager().disablePlugin(this);
+		} 
+		
+		if (Bukkit.getServer().getPluginManager().getPlugin("VoteParty") != null
+				&& Bukkit.getServer().getPluginManager().getPlugin("VoteParty")
+						.isEnabled()) {
+			useVoteParty = true;
 		}
-
+		
 		init();
+		
 		rankupfile.reload();
 		rankupfile.save();
-		messagesFile.createNewFile("Loading EZRanksLite messages.yml",
-				"EZRanksLite messages file");
+		
+		messagesFile.createNewFile("Loading EZRanksLite messages.yml", "EZRanksLite messages file");
 		loadMessages();
+		
 		getLogger().info(rankupfile.loadRankupsFromFile());
 		
 		multiplierfile.reload();
@@ -159,9 +161,11 @@ public class EZRanksLite extends JavaPlugin {
 		
 		registerCmds();
 		registerListeners();
+		
 		if (!startMetricsLite()) {
 			debug(false, "Could not start MetricsLite!");
 		}
+		
 		if (useScoreboard) {
 			debug(false, "Scoreboard features are enabled!");
 			startScoreboardTask();
@@ -310,6 +314,10 @@ public class EZRanksLite extends JavaPlugin {
 	
 	public MultiplierFile getMultiplierConfig() {
 		return multiplierfile;
+	}
+	
+	public ConfigWrapper getMessagesFile() {
+		return messagesFile;
 	}
 
 	public void debug(boolean severe, String msg) {
@@ -513,5 +521,6 @@ public class EZRanksLite extends JavaPlugin {
 	public static EZRanksLite i() {
 		return instance;
 	}
-
+	
+	
 }
